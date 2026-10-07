@@ -1,0 +1,8 @@
+# 라즈베리파이 5에서 설치. venv는 --system-site-packages 로 만들 것
+# (picamera2, gpiozero 는 라즈베리파이 OS에 기본 포함되어 있어 system-site-packages 로 접근)
+adafruit-circuitpython-servokit
+ai-edge-litert
+numpy<2
+supabase
+# ai-edge-litert 설치가 실패하면 아래로 대체:
+# tflite-runtime

@@ -1,0 +1,19 @@
+[Unit]
+# 시연용 자동 시작. 전원만 꽂으면 main.py 가 자동 실행됩니다.
+# 설치:
+#   sudo cp trashbin.service /etc/systemd/system/
+#   sudo systemctl enable trashbin.service && sudo reboot
+# ※ 아래 User 와 경로의 "사용자이름" 을 실제 Pi 사용자명으로 바꾸세요.
+Description=AI Trash Bin
+After=network-online.target
+
+[Service]
+User=사용자이름
+WorkingDirectory=/home/사용자이름/ai-trashbin/code
+EnvironmentFile=-/home/사용자이름/ai-trashbin/code/.env
+ExecStart=/home/사용자이름/ai-trashbin/code/env/bin/python main.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
