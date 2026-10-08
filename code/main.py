@@ -1,7 +1,8 @@
 """
-전체 통합. 감지 → 촬영 → 분류 → 회전+기울임 투하 → 원위치 → 칸 상태 Supabase 기록.
+전체 통합. 감지 → 촬영 → 분류 → 회전+기울임 투하 → 원위치 → (있으면) 칸 상태 Supabase 기록.
 실행: python main.py   (model_unquant.tflite, labels.txt 가 같은 폴더에 있어야 함)
 Supabase 미설정 시 웹 기록만 건너뛰고 분류·투하는 정상 동작.
+IR 센서(칸 여유/참)는 초기 단계에서 뺌 — config.PIN_IR이 비어 있으면 자동으로 건너뜀.
 """
 import time
 import numpy as np
@@ -100,9 +101,10 @@ try:
                 label = "general"              # 안전 로직
                 print("  → 확신 부족, 일반으로")
             drop(label)
-            status = bin_status()
+            status = bin_status()           # IR 미설치 시 {} (정상)
             log_event(label, conf, status)
-            print("  칸 상태:", status)
+            if status:
+                print("  칸 상태:", status)
         time.sleep(0.1)
 except KeyboardInterrupt:
     print("\n종료")
