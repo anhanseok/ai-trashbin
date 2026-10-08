@@ -35,7 +35,9 @@ def drop(label):
     home()                                    # 원위치
 
 # ── 센서 ──
-ultrasonic = DistanceSensor(echo=C.PIN_ECHO, trigger=C.PIN_TRIG, max_distance=1)
+ultrasonic = None
+if C.USE_ULTRASONIC:
+    ultrasonic = DistanceSensor(echo=C.PIN_ECHO, trigger=C.PIN_TRIG, max_distance=1)
 ir = {name: DigitalInputDevice(pin, active_state=False, pull_up=None)
       for name, pin in C.PIN_IR.items()}
 
@@ -88,24 +90,39 @@ def log_event(label, conf, status):
         print("기록 실패(무시):", e)
 
 # ── 메인 루프 ──
+def wait_for_item():
+    """쓰레기가 올라올 때까지 기다렸다가 (label, conf) 반환."""
+    if ultrasonic:                             # 초음파 모드
+        while ultrasonic.distance * 100 >= C.TRIGGER_CM:
+            time.sleep(0.1)
+        time.sleep(1)                          # 흔들림이 멈출 때까지
+        return classify()
+    prev = None                                # 카메라 모드: 2번 연속 같은 결과일 때만
+    while True:
+        label, conf = classify()
+        if label == "empty" or conf < C.DETECT_CONF:
+            prev = None
+        elif label == prev:
+            return label, conf
+        else:
+            prev = label
+        time.sleep(0.4)
+
 home()
 print("준비 완료. 쓰레기를 넣어 주세요. (Ctrl+C 종료)")
 try:
     while True:
-        if ultrasonic.distance * 100 < C.TRIGGER_CM:
-            time.sleep(1)                      # 흔들림이 멈출 때까지
-            label, conf = classify()
-            print(f"분류: {label} ({conf:.0%})")
-            if label == "empty":
-                continue
-            if conf < C.MIN_CONF or label not in C.BINS:
-                label = "general"              # 안전 로직
-                print("  → 확신 부족, 일반으로")
-            drop(label)
-            status = bin_status()           # IR 미설치 시 {} (정상)
-            log_event(label, conf, status)
-            if status:
-                print("  칸 상태:", status)
-        time.sleep(0.1)
+        label, conf = wait_for_item()
+        print(f"분류: {label} ({conf:.0%})")
+        if label == "empty":
+            continue
+        if conf < C.MIN_CONF or label not in C.BINS:
+            label = "general"                  # 안전 로직
+            print("  → 확신 부족, 일반으로")
+        drop(label)
+        status = bin_status()                  # IR 미설치 시 {} (정상)
+        log_event(label, conf, status)
+        if status:
+            print("  칸 상태:", status)
 except KeyboardInterrupt:
     print("\n종료")

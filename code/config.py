@@ -23,6 +23,12 @@ BINS = {               # 이름: (회전 각도, 기울임 각도)
 }
 PAN_HOME = 90
 
+# ── 투입 감지 방식 ──
+# False: 카메라만으로 감지 (초기 단계, 센서 없음)
+# True : 초음파 센서로 감지 (나중에 HC-SR04 추가하면 True로)
+USE_ULTRASONIC = False
+DETECT_CONF = 0.60      # 카메라 감지: 이 확신 이상으로 2번 연속 같은 결과면 "넣었다"
+
 # ── 핀 (BCM 번호) ──
 PIN_TRIG = 23           # 투입 감지 초음파 TRIG
 PIN_ECHO = 24           # 투입 감지 초음파 ECHO (저항으로 3.3V 분배)
