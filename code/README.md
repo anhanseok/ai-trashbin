@@ -16,7 +16,7 @@
 1. `test_servo.py` → 서보 OK
 2. `test_sensors.py` → 센서 OK
 3. `capture.py` 4개 클래스 → Teachable Machine 학습 → `model_unquant.tflite`, `labels.txt` 복사
-4. `main.py` → 분류·투하 확인, `config.py`의 `PAN`/`TILT_DUMP` 조정
+4. `main.py` → 분류·투하 확인, `config.py`의 `BINS`(회전·기울임 각도)와 `TILT_FWD`/`TILT_BACK` 조정
 5. (웹) `.env` 설정 후 `main.py` → Supabase 기록 확인
 6. `trashbin.service` 등록 → 자동 시작
 

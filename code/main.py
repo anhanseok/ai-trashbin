@@ -23,13 +23,14 @@ for ch in (C.CH_PAN, C.CH_TILT):
 
 def home():
     kit.servo[C.CH_TILT].angle = C.TILT_HOME
-    kit.servo[C.CH_PAN].angle = C.PAN["can"]  # 가운데 칸 방향을 기본으로
+    kit.servo[C.CH_PAN].angle = C.PAN_HOME
     time.sleep(0.7)
 
 def drop(label):
-    kit.servo[C.CH_PAN].angle = C.PAN[label]  # 방향 조준
+    pan, tilt = C.BINS[label]
+    kit.servo[C.CH_PAN].angle = pan           # 방향 조준
     time.sleep(0.8)
-    kit.servo[C.CH_TILT].angle = C.TILT_DUMP  # 기울여 투하
+    kit.servo[C.CH_TILT].angle = tilt         # 앞 또는 뒤로 기울여 투하
     time.sleep(1.0)
     home()                                    # 원위치
 
@@ -97,7 +98,7 @@ try:
             print(f"분류: {label} ({conf:.0%})")
             if label == "empty":
                 continue
-            if conf < C.MIN_CONF or label not in C.PAN:
+            if conf < C.MIN_CONF or label not in C.BINS:
                 label = "general"              # 안전 로직
                 print("  → 확신 부족, 일반으로")
             drop(label)
