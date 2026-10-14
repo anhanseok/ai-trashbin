@@ -7,3 +7,9 @@ env/
 # 수집 데이터·모델 (용량 큼, 로컬 보관)
 code/data/
 code/*.tflite
+# Supabase 개인 액세스 토큰 (로컬 전용)
+.supabase-token
+.supabase-db-pass
+.supabase-publishable
+.test-admin
+.admin-login
