@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>그림1 대시보드</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { width: 1280px; height: 800px; font-family: "Malgun Gothic", sans-serif; background: #f4f5f7; color: #222; }
+  header { height: 60px; background: #fff; border-bottom: 2px solid #ddd; display: flex; align-items: center; padding: 0 28px; gap: 32px; }
+  .logo { font-weight: 700; font-size: 20px; }
+  nav a { margin-right: 20px; font-size: 16px; color: #888; text-decoration: none; padding-bottom: 18px; }
+  nav a.on { color: #222; font-weight: 700; border-bottom: 3px solid #222; }
+  .user { margin-left: auto; font-size: 14px; color: #666; }
+  .user b { color: #222; }
+  main { padding: 28px; }
+  .bin { display: flex; align-items: baseline; gap: 16px; margin-bottom: 20px; }
+  .bin h1 { font-size: 24px; }
+  .bin span { font-size: 14px; color: #666; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #2a9d4b; margin-right: 6px; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .card { background: #fff; border: 2px solid #ccc; border-radius: 12px; padding: 24px; height: 360px; display: flex; flex-direction: column; }
+  .card.full { border-color: #d62828; background: #fff5f5; }
+  .card h2 { font-size: 22px; margin-bottom: 4px; }
+  .card .sub { font-size: 13px; color: #888; margin-bottom: 18px; }
+  .state { font-size: 30px; font-weight: 700; color: #2a9d4b; margin-bottom: 8px; }
+  .full .state { color: #d62828; }
+  .since { font-size: 14px; color: #666; margin-bottom: 18px; }
+  .count { font-size: 14px; color: #444; }
+  .count b { font-size: 20px; }
+  .warn { margin-top: 12px; background: #fff3cd; border: 1px solid #e0b400; border-radius: 6px; padding: 8px 10px; font-size: 13px; }
+  .btn { margin-top: auto; height: 48px; border-radius: 8px; border: none; font-size: 17px; font-weight: 700; background: #d62828; color: #fff; }
+  .btn.off { background: #fff; color: #444; border: 2px solid #bbb; }
+  .note { position: absolute; font-size: 13px; color: #1d4ed8; background: #e8efff; border: 1px dashed #1d4ed8; border-radius: 6px; padding: 6px 10px; }
+  .recent { margin-top: 20px; background: #fff; border: 2px solid #ccc; border-radius: 12px; padding: 16px 24px; display: flex; align-items: center; gap: 20px; font-size: 15px; }
+  .thumb { width: 64px; height: 48px; background: repeating-linear-gradient(45deg, #ddd 0 6px, #eee 6px 12px); border: 1px solid #bbb; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #777; }
+  .tag { padding: 3px 10px; border-radius: 12px; background: #e8efff; font-weight: 700; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">♻ AI 분리수거함 관제</div>
+  <nav><a class="on" href="#">대시보드</a><a href="#">투입 기록</a></nav>
+  <div class="user">관리자 <b>기흥구청 청소행정과</b> · 로그아웃</div>
+</header>
+<main>
+  <div class="bin">
+    <h1>수거함 #01 · 강남대 정문 버스정류장</h1>
+    <span><i class="dot"></i>연결됨 · 마지막 신호 12초 전</span>
+  </div>
+  <div class="cards">
+    <div class="card full">
+      <h2>페트</h2>
+      <div class="sub">재활용품</div>
+      <div class="state">● 가득참</div>
+      <div class="since">10/14 13:52부터 (1시간 8분째)</div>
+      <div class="count">오늘 투입 <b>48</b>개</div>
+      <button class="btn">수거 완료</button>
+    </div>
+    <div class="card">
+      <h2>캔</h2>
+      <div class="sub">재활용품</div>
+      <div class="state">● 정상</div>
+      <div class="since">마지막 수거 10/14 09:10</div>
+      <div class="count">오늘 투입 <b>21</b>개</div>
+      <div class="warn">⚠ 센서 확인 필요: 수거 완료 후에도 센서가 감지 중입니다. 덜 비웠거나 센서가 가려졌을 수 있습니다.</div>
+      <button class="btn off">수거 완료</button>
+    </div>
+    <div class="card">
+      <h2>일반</h2>
+      <div class="sub">일반쓰레기 · 확신 70% 미만 포함</div>
+      <div class="state">● 정상</div>
+      <div class="since">마지막 수거 10/14 09:10</div>
+      <div class="count">오늘 투입 <b>35</b>개</div>
+      <button class="btn off">수거 완료</button>
+    </div>
+  </div>
+  <div class="recent">
+    <b>방금 들어온 쓰레기</b>
+    <div class="thumb">사진</div>
+    <span class="tag">캔</span>
+    <span>확신도 94%</span>
+    <span style="color:#888">15:00:41</span>
+    <a href="#" style="margin-left:auto;color:#1d4ed8">투입 기록 전체 보기 →</a>
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>그림2 투입 기록</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { width: 1280px; height: 800px; font-family: "Malgun Gothic", sans-serif; background: #f4f5f7; color: #222; }
+  header { height: 60px; background: #fff; border-bottom: 2px solid #ddd; display: flex; align-items: center; padding: 0 28px; gap: 32px; }
+  .logo { font-weight: 700; font-size: 20px; }
+  nav a { margin-right: 20px; font-size: 16px; color: #888; text-decoration: none; padding-bottom: 18px; }
+  nav a.on { color: #222; font-weight: 700; border-bottom: 3px solid #222; }
+  .user { margin-left: auto; font-size: 14px; color: #666; }
+  .user b { color: #222; }
+  main { padding: 28px; display: grid; grid-template-columns: 1fr 380px; gap: 20px; }
+  .panel { background: #fff; border: 2px solid #ccc; border-radius: 12px; padding: 20px 24px; }
+  h2 { font-size: 18px; margin-bottom: 14px; }
+  .filters { display: flex; gap: 8px; margin-bottom: 14px; font-size: 14px; }
+  .chip { padding: 5px 12px; border: 1px solid #bbb; border-radius: 14px; }
+  .chip.on { background: #222; color: #fff; border-color: #222; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th { text-align: left; color: #888; font-weight: 400; font-size: 13px; border-bottom: 1px solid #ddd; padding: 6px 4px; }
+  td { border-bottom: 1px solid #eee; padding: 8px 4px; height: 66px; }
+  .thumb { width: 72px; height: 50px; background: repeating-linear-gradient(45deg, #ddd 0 6px, #eee 6px 12px); border: 1px solid #bbb; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #777; }
+  .tag { padding: 3px 10px; border-radius: 12px; background: #e8efff; font-weight: 700; font-size: 14px; }
+  .low { color: #b45309; font-size: 13px; }
+  .fix { font-size: 13px; color: #1d4ed8; border: 1px solid #1d4ed8; border-radius: 6px; padding: 3px 8px; }
+  .fixed { font-size: 13px; color: #b45309; }
+  .bars { display: flex; align-items: flex-end; gap: 28px; height: 220px; padding: 0 10px; border-bottom: 2px solid #ccc; }
+  .bar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; font-size: 14px; }
+  .bar div { width: 100%; background: #9aa5b8; border-radius: 4px 4px 0 0; }
+  .labels { display: flex; gap: 28px; padding: 8px 10px 0; font-size: 15px; font-weight: 700; }
+  .labels span { flex: 1; text-align: center; }
+  .stat { margin-top: 22px; font-size: 14px; color: #444; line-height: 1.9; }
+  .stat b { font-size: 18px; color: #222; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">♻ AI 분리수거함 관제</div>
+  <nav><a href="#">대시보드</a><a class="on" href="#">투입 기록</a></nav>
+  <div class="user">관리자 <b>기흥구청 청소행정과</b> · 로그아웃</div>
+</header>
+<main>
+  <section class="panel">
+    <h2>투입 기록 · 수거함 #01</h2>
+    <div class="filters">
+      <span class="chip on">전체</span><span class="chip">페트</span><span class="chip">캔</span><span class="chip">일반</span>
+      <span class="chip" style="margin-left:auto">오늘 ▾</span>
+    </div>
+    <table>
+      <tr><th>사진</th><th>시각</th><th>판정 품목</th><th>확신도</th><th>들어간 칸</th><th>관리자 확인</th></tr>
+      <tr><td><div class="thumb">사진</div></td><td>15:00:41</td><td><span class="tag">캔</span></td><td>94%</td><td>캔</td><td><span class="fix">수정 ▾</span></td></tr>
+      <tr><td><div class="thumb">사진</div></td><td>14:58:12</td><td><span class="tag">페트</span></td><td>88%</td><td>페트</td><td><span class="fix">수정 ▾</span></td></tr>
+      <tr><td><div class="thumb">사진</div></td><td>14:55:03</td><td><span class="tag">페트</span></td><td>61%</td><td>일반 <span class="low">· 확신 부족</span></td><td><span class="fixed">→ 페트로 수정됨</span></td></tr>
+      <tr><td><div class="thumb">사진</div></td><td>14:51:37</td><td><span class="tag">일반</span></td><td>90%</td><td>일반</td><td><span class="fix">수정 ▾</span></td></tr>
+      <tr><td><div class="thumb">사진</div></td><td>14:47:20</td><td><span class="tag">캔</span></td><td>97%</td><td>캔</td><td><span class="fix">수정 ▾</span></td></tr>
+      <tr><td><div class="thumb">사진</div></td><td>14:44:58</td><td><span class="tag">페트</span></td><td>92%</td><td>페트</td><td><span class="fix">수정 ▾</span></td></tr>
+    </table>
+  </section>
+  <section class="panel">
+    <h2>오늘 품목별 투입량</h2>
+    <div class="bars">
+      <div class="bar">48<div style="height:170px"></div></div>
+      <div class="bar">21<div style="height:75px"></div></div>
+      <div class="bar">35<div style="height:124px"></div></div>
+    </div>
+    <div class="labels"><span>페트</span><span>캔</span><span>일반</span></div>
+    <div class="stat">
+      총 투입 <b>104</b>개<br>
+      확신 부족으로 일반 처리 <b>7</b>개 (6.7%)<br>
+      오늘 가득참 발생 <b>1</b>회 · 수거 완료 <b>2</b>회<br>관리자가 수정한 판정 <b>1</b>개 → 재학습 데이터
+    </div>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시스템 구성도</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { width: 1280px; height: 640px; font-family: "Malgun Gothic", sans-serif; background: #fff; color: #222; position: relative; }
+  .box { position: absolute; border: 2px solid #333; border-radius: 12px; padding: 14px 16px; background: #fff; }
+  .box h3 { font-size: 18px; margin-bottom: 8px; }
+  .box .tech { font-size: 12px; color: #1d4ed8; margin-bottom: 8px; }
+  .box ul { list-style: none; font-size: 14px; line-height: 1.7; }
+  .bin { left: 30px; top: 60px; width: 330px; height: 330px; background: #f6f7f9; }
+  .sb { left: 475px; top: 60px; width: 330px; height: 330px; background: #effaf3; border-color: #2a9d4b; }
+  .web { left: 920px; top: 60px; width: 330px; height: 230px; background: #eef3ff; border-color: #1d4ed8; }
+  .admin { left: 920px; top: 340px; width: 330px; height: 90px; text-align: center; }
+  .laptop { left: 30px; top: 470px; width: 330px; height: 140px; background: #fffaf0; border-color: #b45309; }
+  .part { border: 1px solid #bbb; border-radius: 6px; padding: 4px 8px; margin-bottom: 6px; font-size: 13px; background: #fff; }
+  svg { position: absolute; left: 0; top: 0; }
+  .lbl { position: absolute; font-size: 13px; background: #fff; padding: 2px 6px; text-align: center; line-height: 1.5; }
+  .title { position: absolute; left: 30px; top: 16px; font-size: 20px; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="title">시스템 구성도</div>
+<svg width="1280" height="640">
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+  <line x1="362" y1="170" x2="470" y2="170" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="807" y1="170" x2="915" y2="170" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="915" y1="240" x2="807" y2="240" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="1085" y1="335" x2="1085" y2="294" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="195" y1="465" x2="195" y2="394" stroke="#b45309" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M640,392 L640,540 L365,540" fill="none" stroke="#b45309" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#a)"/>
+</svg>
+<div class="lbl" style="left:364px;top:122px;width:104px;font-size:12px;white-space:nowrap">투입 기록·사진<br>센서·신호</div>
+<div class="lbl" style="left:812px;top:124px;width:98px">실시간 전송</div>
+<div class="lbl" style="left:812px;top:248px;width:98px">수거 완료<br>판정 수정</div>
+<div class="lbl" style="left:205px;top:420px">.tflite 모델</div>
+<div class="lbl" style="left:400px;top:548px;color:#b45309">판정 수정된 사진 → 재학습 데이터</div>
+
+<div class="box bin">
+  <h3>① 수거함</h3>
+  <div class="tech">Raspberry Pi 5 · Python</div>
+  <div class="part">카메라 OV5647 → 촬영</div>
+  <div class="part">TFLite 모델 → 품목 판정 (기기 안에서)</div>
+  <div class="part">PCA9685 + 서보 2개 → 회전·기울여 투하</div>
+  <div class="part">IR 센서 3개 (칸 높이 80%) → 가득참</div>
+  <div class="part">supabase-py → 30초마다 신호</div>
+</div>
+<div class="box sb">
+  <h3>② Supabase (클라우드)</h3>
+  <div class="tech">PostgreSQL · Auth · Storage · Realtime</div>
+  <ul>
+    <li>DB: 투입, 센서 기록, 수거 기록, 신호</li>
+    <li>Storage: 투입 사진</li>
+    <li>Auth: 관리자 로그인</li>
+    <li>Realtime: 새 기록을 웹에 바로 전달</li>
+  </ul>
+</div>
+<div class="box web">
+  <h3>③ 관리자 웹</h3>
+  <div class="tech">Next.js · TypeScript · Tailwind · Vercel</div>
+  <ul>
+    <li>대시보드: 칸 상태 계산·표시</li>
+    <li>투입 기록, 판정 수정, 통계</li>
+    <li>수거 완료 기록</li>
+  </ul>
+</div>
+<div class="box admin"><h3>관리자 (구청 공무원)</h3><div style="font-size:14px">PC·휴대폰 브라우저</div></div>
+<div class="box laptop">
+  <h3>④ 모델 학습 (노트북)</h3>
+  <div class="tech">Teachable Machine (MobileNet 전이학습)</div>
+  <ul><li>품목별 사진으로 학습 → .tflite 내보내기</li></ul>
+</div>
+</body>
+</html>
