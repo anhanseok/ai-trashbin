@@ -4,26 +4,34 @@ import { useState } from "react";
 import Header from "@/components/Header";
 import Photo from "@/components/Photo";
 import {
-  COMPARTMENTS, LABEL, MIN_CONF, fmtTime, startOfTodayKST, type Compartment, type Deposit,
+  COMPARTMENTS, LABEL, MIN_CONF, fmtDateTime, fmtTime, type Compartment, type Deposit,
 } from "@/lib/bin";
-import { useBinData, usePhotoUrls } from "@/lib/useBinData";
+import { periodStart, useBinData, usePhotoUrls, type Period } from "@/lib/useBinData";
 
 type Filter = "all" | Compartment;
+const PERIODS: { value: Period; label: string }[] = [
+  { value: "today", label: "오늘" },
+  { value: "7d", label: "최근 7일" },
+  { value: "all", label: "전체" },
+];
 
 export default function LogPage() {
-  const { supabase, readings, collections, deposits, loaded } = useBinData();
+  const [period, setPeriod] = useState<Period>("today");
+  const { supabase, readings, collections, deposits, loaded } = useBinData(period);
   const [filter, setFilter] = useState<Filter>("all");
+  const periodLabel = PERIODS.find((p) => p.value === period)!.label;
   const shown = filter === "all" ? deposits : deposits.filter((d) => d.dropped_into === filter);
   const photos = usePhotoUrls(shown.slice(0, 50).map((d) => d.photo_path));
 
-  const today = startOfTodayKST();
+  const since = periodStart(period);
+  const inPeriod = (iso: string) => since === null || iso >= since;
   const counts = Object.fromEntries(
     COMPARTMENTS.map((c) => [c, deposits.filter((d) => d.dropped_into === c).length]),
   ) as Record<Compartment, number>;
   const max = Math.max(1, ...Object.values(counts));
   const lowConf = deposits.filter((d) => d.confidence < MIN_CONF).length;
-  const fullEvents = readings.filter((r) => r.detected && r.created_at >= today).length;
-  const collected = collections.filter((c) => c.created_at >= today).length;
+  const fullEvents = readings.filter((r) => r.detected && inPeriod(r.created_at)).length;
+  const collected = collections.filter((c) => inPeriod(c.created_at)).length;
   const corrected = deposits.filter((d) => d.corrected).length;
   // 실제 정확도: 관리자가 다른 품목으로 고치지 않은 투입의 비율 (기획서 7-4)
   const wrong = deposits.filter((d) => d.corrected && d.corrected !== d.predicted).length;
@@ -42,8 +50,8 @@ export default function LogPage() {
     <>
       <Header />
       <main className="mx-auto grid max-w-6xl gap-5 p-4 sm:p-7 lg:grid-cols-[1fr_360px]">
-        <section className="rounded-xl border-2 border-gray-300 bg-white p-5 sm:px-6">
-          <h2 className="mb-3.5 text-lg font-bold">오늘 투입 기록</h2>
+        <section className="min-w-0 rounded-xl border-2 border-gray-300 bg-white p-5 sm:px-6">
+          <h2 className="mb-3.5 text-lg font-bold">투입 기록 · {periodLabel}</h2>
           <div className="mb-3.5 flex flex-wrap gap-2 text-sm">
             {(["all", ...COMPARTMENTS] as Filter[]).map((f) => (
               <button
@@ -56,6 +64,15 @@ export default function LogPage() {
                 {f === "all" ? "전체" : LABEL[f]}
               </button>
             ))}
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value as Period)}
+              className="ml-auto rounded-full border border-gray-300 px-3 py-1"
+            >
+              {PERIODS.map((p) => (
+                <option key={p.value} value={p.value}>{p.label}</option>
+              ))}
+            </select>
           </div>
 
           <div className="overflow-x-auto">
@@ -76,7 +93,7 @@ export default function LogPage() {
                     <td className="py-2">
                       <Photo url={d.photo_path ? photos[d.photo_path] : undefined} className="h-12 w-[72px]" />
                     </td>
-                    <td>{fmtTime(d.created_at)}</td>
+                    <td>{period === "today" ? fmtTime(d.created_at) : fmtDateTime(d.created_at)}</td>
                     <td>
                       <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-sm font-bold">{LABEL[d.predicted]}</span>
                     </td>
@@ -108,7 +125,7 @@ export default function LogPage() {
         </section>
 
         <section className="self-start rounded-xl border-2 border-gray-300 bg-white p-5 sm:px-6">
-          <h2 className="mb-3.5 text-lg font-bold">오늘 품목별 투입량</h2>
+          <h2 className="mb-3.5 text-lg font-bold">{periodLabel} 품목별 투입량</h2>
           <div className="flex h-[200px] items-end gap-6 border-b-2 border-gray-300 px-2">
             {COMPARTMENTS.map((c) => (
               <div key={c} className="flex flex-1 flex-col items-center justify-end gap-1.5 text-sm">
@@ -129,7 +146,7 @@ export default function LogPage() {
               {deposits.length > 0 && ` (${((lowConf / deposits.length) * 100).toFixed(1)}%)`}
             </p>
             <p>
-              오늘 가득참 발생 <b className="text-lg text-gray-900">{fullEvents}</b>회 · 수거 완료{" "}
+              가득참 발생 <b className="text-lg text-gray-900">{fullEvents}</b>회 · 수거 완료{" "}
               <b className="text-lg text-gray-900">{collected}</b>회
             </p>
             <p>관리자가 수정한 판정 <b className="text-lg text-gray-900">{corrected}</b>개 → 재학습 데이터</p>

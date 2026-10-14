@@ -13,3 +13,5 @@ code/*.tflite
 .supabase-publishable
 .test-admin
 .admin-login
+# 수거함이 못 보낸 기록 보관함
+code/outbox/

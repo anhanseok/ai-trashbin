@@ -16,6 +16,7 @@ except ImportError:
 
 import config as C
 from cloud import Cloud
+from logic import ArrivalDetector, choose_compartment
 
 cloud = Cloud()                               # 연결 신호는 여기서부터 30초마다 나감
 
@@ -85,15 +86,11 @@ def wait_for_item():
             time.sleep(0.1)
         time.sleep(1)                          # 흔들림이 멈출 때까지
         return classify()
-    prev = None                                # 카메라 모드: 2번 연속 같은 결과일 때만
+    detector = ArrivalDetector()               # 카메라 모드: 2번 연속 같은 결과일 때만
     while True:
         label, conf, photo = classify()
-        if label == "empty" or conf < C.DETECT_CONF:
-            prev = None
-        elif label == prev:
+        if detector.update(label, conf):
             return label, conf, photo
-        else:
-            prev = label
         time.sleep(0.4)
 
 home()
@@ -102,12 +99,11 @@ try:
     while True:
         label, conf, photo = wait_for_item()
         print(f"분류: {label} ({conf:.0%})")
-        if label == "empty" or label not in C.BINS:
+        into = choose_compartment(label, conf)
+        if into is None:
             continue
-        into = label
-        if conf < C.MIN_CONF:
-            into = "general"                   # 안전 로직
-            print("  → 확신 부족, 일반으로")
+        if into != label:
+            print("  → 확신 부족, 일반으로")      # 안전 로직
         drop(into)
         cloud.deposit(photo, label, conf, into)  # 판정 품목과 실제로 들어간 칸을 따로 기록
 except KeyboardInterrupt:

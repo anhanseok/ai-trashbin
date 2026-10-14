@@ -4,8 +4,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { BIN_ID, startOfTodayKST, type Bin, type Collection, type Deposit, type SensorReading } from "@/lib/bin";
 
+/** 투입 기록 기간. 칸 상태(센서·수거 기록)는 기간과 상관없이 최근 기록으로 계산한다. */
+export type Period = "today" | "7d" | "all";
+
+export function periodStart(period: Period) {
+  if (period === "today") return startOfTodayKST();
+  if (period === "7d") return new Date(new Date(startOfTodayKST()).getTime() - 6 * 86400000).toISOString();
+  return null;
+}
+
 /** 수거함 1대의 기록을 불러오고, DB가 바뀌면(Realtime) 다시 불러온다. */
-export function useBinData() {
+export function useBinData(period: Period = "today") {
   const supabase = useMemo(() => createClient(), []);
   const [bin, setBin] = useState<Bin | null>(null);
   const [readings, setReadings] = useState<SensorReading[]>([]);
@@ -15,28 +24,32 @@ export function useBinData() {
   const [now, setNow] = useState(() => Date.now());
 
   const load = useCallback(async () => {
-    const today = startOfTodayKST();
+    const since = periodStart(period);
     const [b, r, c, d] = await Promise.all([
       supabase.from("bins").select("*").eq("id", BIN_ID).single(),
       supabase.from("sensor_readings").select("id,compartment,detected,created_at")
         .eq("bin_id", BIN_ID).order("created_at", { ascending: false }).limit(300),
       supabase.from("collections").select("id,compartment,created_at")
         .eq("bin_id", BIN_ID).order("created_at", { ascending: false }).limit(300),
-      supabase.from("deposits").select("*")
-        .eq("bin_id", BIN_ID).gte("created_at", today).order("created_at", { ascending: false }),
+      (since
+        ? supabase.from("deposits").select("*").eq("bin_id", BIN_ID).gte("created_at", since)
+        : supabase.from("deposits").select("*").eq("bin_id", BIN_ID)
+      ).order("created_at", { ascending: false }).limit(1000),
     ]);
     setBin(b.data);
     setReadings(r.data ?? []);
     setCollections(c.data ?? []);
     setDeposits(d.data ?? []);
     setLoaded(true);
-  }, [supabase]);
+  }, [supabase, period]);
 
   useEffect(() => {
     load();
     const channel = supabase
       .channel("bin-" + BIN_ID)
-      .on("postgres_changes", { event: "*", schema: "public", table: "bins" }, load)
+      // 연결 신호(30초마다)는 bins 한 줄만 바꾸면 되므로 전체를 다시 불러오지 않는다
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "bins" },
+        (p) => setBin(p.new as Bin))
       .on("postgres_changes", { event: "*", schema: "public", table: "deposits" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "sensor_readings" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "collections" }, load)

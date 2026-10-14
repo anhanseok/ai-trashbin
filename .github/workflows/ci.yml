@@ -1,0 +1,44 @@
+# 푸시할 때마다 수거함 코드 테스트와 웹 테스트·빌드를 돌린다. 실패하면 GitHub 에 빨간 X.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  bin:
+    name: 수거함 코드 (Python)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: code
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install pytest pillow
+      - run: python -m pytest -q tests
+
+  web:
+    name: 관리자 웹 (Next.js)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    env:
+      # 빌드용 가짜 값 (실제 키는 Vercel 환경변수에만)
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci
+      NEXT_PUBLIC_BIN_ID: bin-01
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build

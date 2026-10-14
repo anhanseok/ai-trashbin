@@ -15,6 +15,7 @@ from PIL import Image, ImageDraw
 
 import config as C
 from cloud import Cloud
+from logic import choose_compartment
 
 COLOR = {"plastic": (120, 180, 230), "can": (200, 200, 200), "general": (190, 160, 120)}
 
@@ -37,7 +38,7 @@ def main():
     for n in range(count):
         label = random.choice(list(C.BINS))
         conf = random.uniform(0.55, 0.99)
-        into = label if conf >= C.MIN_CONF else "general"
+        into = choose_compartment(label, conf)
         cloud.deposit(fake_photo(label, conf), label, conf, into)
         print(f"[{n + 1}/{count}] 투입: {label} {conf:.0%} → {into} 칸")
         time.sleep(gap)
