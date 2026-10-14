@@ -1,8 +1,8 @@
 """
-전체 통합. 감지 → 촬영 → 분류 → 회전+기울임 투하 → 원위치 → (있으면) 칸 상태 Supabase 기록.
-실행: python main.py   (model_unquant.tflite, labels.txt 가 같은 폴더에 있어야 함)
-Supabase 미설정 시 웹 기록만 건너뛰고 분류·투하는 정상 동작.
-IR 센서(칸 여유/참)는 초기 단계에서 뺌 — config.PIN_IR이 비어 있으면 자동으로 건너뜀.
+전체 통합. 감지 → 촬영 → 분류 → 회전+기울임 투하 → 원위치 → Supabase 기록(투입·사진·센서·연결 신호).
+실행: python main.py   (model_unquant.tflite, labels.txt, .env 가 같은 폴더에 있어야 함)
+Supabase 미설정 시 웹 기록만 건너뛰고 분류·투하는 정상 동작 (cloud.py).
+IR 센서(가득참)는 config.PIN_IR 이 비어 있으면 자동으로 건너뜀.
 """
 import time
 import numpy as np
@@ -15,6 +15,9 @@ except ImportError:
     from tflite_runtime.interpreter import Interpreter
 
 import config as C
+from cloud import Cloud
+
+cloud = Cloud()                               # 연결 신호는 여기서부터 30초마다 나감
 
 # ── 서보 ──
 kit = ServoKit(channels=16)
@@ -38,11 +41,14 @@ def drop(label):
 ultrasonic = None
 if C.USE_ULTRASONIC:
     ultrasonic = DistanceSensor(echo=C.PIN_ECHO, trigger=C.PIN_TRIG, max_distance=1)
-ir = {name: DigitalInputDevice(pin, active_state=False, pull_up=None)
+ir = {name: DigitalInputDevice(pin, active_state=False, pull_up=None, bounce_time=0.5)
       for name, pin in C.PIN_IR.items()}
 
-def bin_status():
-    return {name: bool(dev.value) for name, dev in ir.items()}  # True = 참
+# 센서 값이 바뀔 때만 기록. 켤 때 한 번 현재 값을 남겨 웹이 시작 상태를 알게 한다.
+for name, dev in ir.items():
+    dev.when_activated = lambda n=name: cloud.sensor(n, True)
+    dev.when_deactivated = lambda n=name: cloud.sensor(n, False)
+    cloud.sensor(name, dev.value)
 
 # ── AI 모델 ──
 model = Interpreter(model_path="model_unquant.tflite")
@@ -58,7 +64,9 @@ cam.start()
 time.sleep(2)
 
 def classify():
-    img = cam.capture_image("main").convert("RGB")
+    """(라벨, 확신도, 원본 사진) 반환."""
+    photo = cam.capture_image("main").convert("RGB")
+    img = photo
     w, h = img.size
     s = min(w, h)
     img = img.crop(((w-s)//2, (h-s)//2, (w+s)//2, (h+s)//2)).resize((224, 224))
@@ -67,31 +75,11 @@ def classify():
     model.invoke()
     p = model.get_tensor(out["index"])[0]
     i = int(np.argmax(p))
-    return labels[i], float(p[i])
-
-# ── Supabase (선택) ──
-sb = None
-if C.SUPABASE_URL and C.SUPABASE_KEY:
-    try:
-        from supabase import create_client
-        sb = create_client(C.SUPABASE_URL, C.SUPABASE_KEY)
-        print("Supabase 연결됨")
-    except Exception as e:
-        print("Supabase 연결 실패(무시하고 진행):", e)
-
-def log_event(label, conf, status):
-    if not sb:
-        return
-    try:
-        sb.table("events").insert({
-            "label": label, "confidence": round(conf, 3), "status": status
-        }).execute()
-    except Exception as e:
-        print("기록 실패(무시):", e)
+    return labels[i], float(p[i]), photo
 
 # ── 메인 루프 ──
 def wait_for_item():
-    """쓰레기가 올라올 때까지 기다렸다가 (label, conf) 반환."""
+    """쓰레기가 올라올 때까지 기다렸다가 (label, conf, photo) 반환."""
     if ultrasonic:                             # 초음파 모드
         while ultrasonic.distance * 100 >= C.TRIGGER_CM:
             time.sleep(0.1)
@@ -99,11 +87,11 @@ def wait_for_item():
         return classify()
     prev = None                                # 카메라 모드: 2번 연속 같은 결과일 때만
     while True:
-        label, conf = classify()
+        label, conf, photo = classify()
         if label == "empty" or conf < C.DETECT_CONF:
             prev = None
         elif label == prev:
-            return label, conf
+            return label, conf, photo
         else:
             prev = label
         time.sleep(0.4)
@@ -112,17 +100,16 @@ home()
 print("준비 완료. 쓰레기를 넣어 주세요. (Ctrl+C 종료)")
 try:
     while True:
-        label, conf = wait_for_item()
+        label, conf, photo = wait_for_item()
         print(f"분류: {label} ({conf:.0%})")
-        if label == "empty":
+        if label == "empty" or label not in C.BINS:
             continue
-        if conf < C.MIN_CONF or label not in C.BINS:
-            label = "general"                  # 안전 로직
+        into = label
+        if conf < C.MIN_CONF:
+            into = "general"                   # 안전 로직
             print("  → 확신 부족, 일반으로")
-        drop(label)
-        status = bin_status()                  # IR 미설치 시 {} (정상)
-        log_event(label, conf, status)
-        if status:
-            print("  칸 상태:", status)
+        drop(into)
+        cloud.deposit(photo, label, conf, into)  # 판정 품목과 실제로 들어간 칸을 따로 기록
 except KeyboardInterrupt:
     print("\n종료")
+    cloud.flush()

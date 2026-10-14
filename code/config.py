@@ -4,6 +4,14 @@
 """
 import os
 
+# 같은 폴더의 .env 를 읽어 환경변수로 넣는다 (systemd 없이 python main.py 로 실행해도 키가 들어가게)
+_env = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+if os.path.exists(_env):
+    for _line in open(_env, encoding="utf-8"):
+        _k, _sep, _v = _line.strip().partition("=")
+        if _sep and not _k.startswith("#"):
+            os.environ.setdefault(_k.strip(), _v.strip())
+
 # ── 서보 (PCA9685 채널) ──
 CH_PAN = 0          # 회전 서보
 CH_TILT = 1         # 기울임 서보
@@ -49,3 +57,5 @@ MIN_CONF = 0.70         # 확신이 이보다 낮으면 일반쓰레기로 (안�
 # ── Supabase (웹 대시보드용). 환경변수로 주입, 코드에 키 하드코딩 금지 ──
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+BIN_ID = os.environ.get("BIN_ID", "bin-01")    # supabase/schema.sql 의 bins.id
+HEARTBEAT_SEC = 30                              # 연결 신호 주기. 웹은 2분 넘게 없으면 "연결 끊김"
