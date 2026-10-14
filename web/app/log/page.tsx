@@ -25,6 +25,9 @@ export default function LogPage() {
   const fullEvents = readings.filter((r) => r.detected && r.created_at >= today).length;
   const collected = collections.filter((c) => c.created_at >= today).length;
   const corrected = deposits.filter((d) => d.corrected).length;
+  // 실제 정확도: 관리자가 다른 품목으로 고치지 않은 투입의 비율 (기획서 7-4)
+  const wrong = deposits.filter((d) => d.corrected && d.corrected !== d.predicted).length;
+  const accuracy = deposits.length > 0 ? ((deposits.length - wrong) / deposits.length) * 100 : null;
 
   async function correct(d: Deposit, value: string) {
     const corrected = value === "" ? null : (value as Compartment);
@@ -130,6 +133,13 @@ export default function LogPage() {
               <b className="text-lg text-gray-900">{collected}</b>회
             </p>
             <p>관리자가 수정한 판정 <b className="text-lg text-gray-900">{corrected}</b>개 → 재학습 데이터</p>
+            <p>
+              실제 정확도{" "}
+              <b className={`text-lg ${accuracy !== null && accuracy < 85 ? "text-red-600" : "text-gray-900"}`}>
+                {accuracy === null ? "-" : `${accuracy.toFixed(1)}%`}
+              </b>{" "}
+              <span className="text-gray-400">(목표 85%)</span>
+            </p>
           </div>
         </section>
       </main>
