@@ -1,0 +1,17 @@
+[Unit]
+# 부품(카메라·모델)이 오기 전 임시: 파이가 켜져 있으면 웹에 "연결됨"이 뜨도록 연결 신호만 보낸다.
+# main.py 를 trashbin.service 로 돌리기 시작하면 이 서비스는 끈다:
+#   sudo systemctl disable --now heartbeat.service
+Description=AI Trash Bin heartbeat only
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/ai-trashbin/code
+ExecStart=/home/pi/ai-trashbin/code/env/bin/python -u fake_bin.py 0
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

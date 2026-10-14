@@ -6,4 +6,5 @@
 - 라즈베리파이: 사용자 `pi`, 호스트 `raspberrypi`, SSH 키로 접속. 와이파이는 집 iptime5G(192.168.0.4, 우선)와 아이폰 핫스팟(172.20.10.x) 두 곳이 등록되어 있음. 주소가 바뀌면 MAC 2c-cf-67-09-09-bd 로 찾는다. 실제 보드는 **Raspberry Pi 4 Model B 8GB**(파이 5 아님, ElectroCookie 팬 케이스). 저장소는 `~/ai-trashbin`, venv는 `code/env`, sudo는 비밀번호 없이 가능.
 - Supabase 프로젝트 ref `ojxtixdmnedotimnsfcr`(서울). 관리 API 토큰은 `.supabase-token`, 웹 키는 `web/.env.local`, 수거함 키는 `code/.env` (모두 Git 제외). 웹은 `web/`(Next.js 15, `npm run dev`).
 - 배포: https://ai-trashbin.vercel.app (Vercel 프로젝트 hanseok1/ai-trashbin, 루트 `web`). master에 푸시하면 자동 배포. 관리자 계정 hanseogan@naver.com, 비밀번호는 로컬 `.admin-login`.
+- 파이에는 임시로 `heartbeat.service`(연결 신호만, `fake_bin.py 0`)가 켜져 있음. main.py 를 돌릴 때 `sudo systemctl disable --now heartbeat.service`.
 - 카메라·서보 없이 웹 연동 시험: 파이에서 `cd ~/ai-trashbin/code && env/bin/python fake_bin.py 5 5` (가짜 투입 + 페트 칸 가득참). 2026-10-15 시험 데이터(투입 3건, 페트 가득참)가 DB에 남아 있음 — 사용자가 화면을 본 뒤 지울 것.

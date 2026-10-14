@@ -1,6 +1,7 @@
 """
 카메라·서보 없이 웹 연동을 시험하는 가짜 수거함. main.py 와 같은 cloud.py 로 보낸다.
 실행: python fake_bin.py [투입 횟수=5] [간격 초=5]
+      python fake_bin.py 0   → 연결 신호만 계속 보냄 (부품 오기 전 heartbeat.service 가 이렇게 실행)
 - 연결 신호를 보내 웹에 "연결됨"이 뜬다
 - 무작위 품목·확신도로 투입을 보낸다 (확신도 70% 미만이면 일반 칸, main.py 와 같은 규칙)
 - 마지막에 페트 칸을 가득참으로 만든다 (PIN_IR 을 쓰지 않아도 웹 표시를 볼 수 있게)
@@ -41,8 +42,9 @@ def main():
         print(f"[{n + 1}/{count}] 투입: {label} {conf:.0%} → {into} 칸")
         time.sleep(gap)
 
-    cloud.sensor("plastic", True)
-    print("페트 칸 가득참 신호 보냄. 웹에서 빨간색으로 바뀌는지 확인하세요.")
+    if count > 0:                             # 0 이면 연결 신호만 보냄 (heartbeat.service)
+        cloud.sensor("plastic", True)
+        print("페트 칸 가득참 신호 보냄. 웹에서 빨간색으로 바뀌는지 확인하세요.")
     cloud.flush()
     print("연결 신호를 계속 보냅니다. Ctrl+C 로 끝내세요.")
     try:
