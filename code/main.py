@@ -34,7 +34,7 @@ def drop(label):
     pan, tilt = C.BINS[label]
     kit.servo[C.CH_PAN].angle = pan           # 방향 조준
     time.sleep(0.8)
-    kit.servo[C.CH_TILT].angle = tilt         # 앞 또는 뒤로 기울여 투하
+    kit.servo[C.CH_TILT].angle = tilt         # 앞으로 기울여 투하
     time.sleep(1.0)
     home()                                    # 원위치
 
