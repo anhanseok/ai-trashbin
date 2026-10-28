@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
+import { IBM_Plex_Sans_KR, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+
+const plex = IBM_Plex_Sans_KR({ weight: ["400", "500", "700"], subsets: ["latin"], variable: "--font-plex" });
+const jb = JetBrains_Mono({ weight: ["500", "700"], subsets: ["latin"], variable: "--font-jb" });
 
 export const metadata: Metadata = {
   title: "AI 분리수거함 관제",
@@ -8,8 +12,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ko">
-      <body className="antialiased">{children}</body>
+    <html lang="ko" className={`${plex.variable} ${jb.variable}`}>
+      <body className="grid-bg min-h-screen antialiased">{children}</body>
     </html>
   );
 }

@@ -1,7 +1,43 @@
 @import "tailwindcss";
 
+/* 관제실 다크 테마. 상태색(ok·full·warn·off)은 칸 상태에만, accent는 누를 수 있는 것에만 쓴다 */
+@theme inline {
+  --color-bg: #0a0f15;
+  --color-panel: #111922;
+  --color-panel-2: #172230;
+  --color-line: #233142;
+  --color-ink: #e6edf3;
+  --color-muted: #8a9aab;
+  --color-dim: #5a6b7d;
+  --color-accent: #4ea8ff;
+  --color-ok: #3ddc97;
+  --color-full: #ff5a5f;
+  --color-warn: #f5b942;
+  --color-off: #6b7785;
+
+  --font-sans: var(--font-plex), "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --font-mono: var(--font-jb), ui-monospace, Consolas, monospace;
+}
+
+html {
+  color-scheme: dark;
+}
+
 body {
-  background: #f4f5f7;
-  color: #222;
-  font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+/* 패널 뒤에 아주 옅은 관제 격자 */
+.grid-bg {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+select option {
+  background: var(--color-panel);
+  color: var(--color-ink);
 }

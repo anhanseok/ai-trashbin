@@ -27,20 +27,20 @@ export default function AccountPage() {
     <>
       <Header />
       <main className="mx-auto max-w-md p-4 sm:p-7">
-        <form onSubmit={submit} className="rounded-xl border-2 border-gray-300 bg-white p-6">
+        <form onSubmit={submit} className="rounded-xl border border-line bg-panel p-6">
           <h1 className="mb-5 text-lg font-bold">비밀번호 변경</h1>
-          <label className="mb-1 block text-sm text-gray-600">새 비밀번호 (8자 이상)</label>
+          <label className="mb-1 block text-sm text-muted">새 비밀번호 (8자 이상)</label>
           <input type="password" autoComplete="new-password" value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="mb-4 w-full rounded-md border border-gray-300 px-3 py-2" />
-          <label className="mb-1 block text-sm text-gray-600">새 비밀번호 확인</label>
+            className="mb-4 w-full rounded-md border border-line bg-panel-2 px-3 py-2 text-ink outline-none focus:border-accent" />
+          <label className="mb-1 block text-sm text-muted">새 비밀번호 확인</label>
           <input type="password" autoComplete="new-password" value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            className="mb-4 w-full rounded-md border border-gray-300 px-3 py-2" />
+            className="mb-4 w-full rounded-md border border-line bg-panel-2 px-3 py-2 text-ink outline-none focus:border-accent" />
           {message && (
-            <p className={`mb-4 text-sm ${message.ok ? "text-green-700" : "text-red-600"}`}>{message.text}</p>
+            <p className={`mb-4 text-sm ${message.ok ? "text-ok" : "text-full"}`}>{message.text}</p>
           )}
-          <button disabled={busy} className="h-11 w-full rounded-lg bg-gray-900 font-bold text-white disabled:opacity-50">
+          <button disabled={busy} className="h-11 w-full rounded-lg bg-accent font-bold text-bg transition-colors hover:bg-accent/85 disabled:opacity-50">
             {busy ? "바꾸는 중…" : "비밀번호 바꾸기"}
           </button>
         </form>

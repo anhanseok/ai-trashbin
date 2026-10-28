@@ -4,7 +4,7 @@ export default function Photo({ url, className = "" }: { url?: string; className
   if (!url) {
     return (
       <div
-        className={`flex items-center justify-center rounded border border-gray-300 bg-[repeating-linear-gradient(45deg,#ddd_0_6px,#eee_6px_12px)] text-[11px] text-gray-500 ${className}`}
+        className={`flex items-center justify-center rounded border border-line bg-[repeating-linear-gradient(45deg,#172230_0_6px,#111922_6px_12px)] text-[11px] text-dim ${className}`}
       >
         사진 없음
       </div>
@@ -12,7 +12,7 @@ export default function Photo({ url, className = "" }: { url?: string; className
   }
   return (
     <a href={url} target="_blank" rel="noreferrer">
-      <img src={url} alt="투입 사진" className={`rounded border border-gray-300 object-cover ${className}`} />
+      <img src={url} alt="투입 사진" className={`rounded border border-line object-cover ${className}`} />
     </a>
   );
 }
