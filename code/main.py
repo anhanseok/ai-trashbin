@@ -4,6 +4,7 @@
 Supabase 미설정 시 웹 기록만 건너뛰고 분류·투하는 정상 동작 (cloud.py).
 IR 센서(가득참)는 config.PIN_IR 이 비어 있으면 자동으로 건너뜀.
 """
+import threading
 import time
 import numpy as np
 from picamera2 import Picamera2
@@ -16,7 +17,7 @@ except ImportError:
 
 import config as C
 from cloud import Cloud
-from logic import ArrivalDetector, choose_compartment
+from logic import ArrivalDetector, SensorFilter, choose_compartment
 
 cloud = Cloud()                               # 연결 신호는 여기서부터 30초마다 나감
 
@@ -42,14 +43,26 @@ def drop(label):
 ultrasonic = None
 if C.USE_ULTRASONIC:
     ultrasonic = DistanceSensor(echo=C.PIN_ECHO, trigger=C.PIN_TRIG, max_distance=1)
-ir = {name: DigitalInputDevice(pin, active_state=False, pull_up=None, bounce_time=0.5)
+ir = {name: DigitalInputDevice(pin, active_state=False, pull_up=None)
       for name, pin in C.PIN_IR.items()}
 
-# 센서 값이 바뀔 때만 기록. 켤 때 한 번 현재 값을 남겨 웹이 시작 상태를 알게 한다.
+# 센서 값이 FULL_HOLD_SEC 이상 유지돼 바뀐 것으로 확정될 때만 기록 (떨어지는 쓰레기 무시).
+# 켤 때 한 번 현재 값을 남겨 웹이 시작 상태를 알게 한다.
+filters = {name: SensorFilter(C.FULL_HOLD_SEC) for name in ir}
 for name, dev in ir.items():
-    dev.when_activated = lambda n=name: cloud.sensor(n, True)
-    dev.when_deactivated = lambda n=name: cloud.sensor(n, False)
-    cloud.sensor(name, dev.value)
+    cloud.sensor(name, filters[name].start(bool(dev.value)))
+
+def watch_sensors():
+    while True:
+        now = time.monotonic()
+        for name, dev in ir.items():
+            changed = filters[name].update(bool(dev.value), now)
+            if changed is not None:
+                cloud.sensor(name, changed)
+        time.sleep(0.1)
+
+if ir:
+    threading.Thread(target=watch_sensors, daemon=True).start()
 
 # ── AI 모델 ──
 model = Interpreter(model_path="model_unquant.tflite")

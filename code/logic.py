@@ -31,3 +31,31 @@ class ArrivalDetector:
             return True
         self.prev = label
         return False
+
+
+class SensorFilter:
+    """가득참 IR 센서 하나의 값을 거른다. 같은 값이 hold 초 이상 유지돼야 바뀐 것으로 본다.
+    떨어지는 쓰레기가 센서 앞을 잠깐 지나가거나, 쌓인 쓰레기가 흔들려 깜빡이는 것을 무시한다."""
+
+    def __init__(self, hold):
+        self.hold = hold
+        self.reported = None      # 마지막으로 기록한 값
+        self.pending = None       # 바뀌는 중인 값
+        self.since = None         # pending 이 시작된 시각
+
+    def start(self, raw):
+        """켤 때 현재 값. 웹이 시작 상태를 알도록 바로 기록할 값을 돌려준다."""
+        self.reported = raw
+        return raw
+
+    def update(self, raw, now):
+        """새로 읽은 값. 기록해야 할 변화가 확정되면 그 값을, 아니면 None."""
+        if raw == self.reported:
+            self.pending = None
+            return None
+        if raw != self.pending:
+            self.pending, self.since = raw, now
+        if now - self.since >= self.hold:
+            self.reported, self.pending = raw, None
+            return raw
+        return None

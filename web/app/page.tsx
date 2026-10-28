@@ -90,6 +90,9 @@ export default function Dashboard() {
             const s = states[c];
             const full = s.status === "full";
             const count = deposits.filter((d) => d.dropped_into === c).length;
+            const sensor = readings
+              .filter((r) => r.compartment === c)
+              .reduce<(typeof readings)[number] | null>((a, r) => (!a || r.created_at > a.created_at ? r : a), null);
             return (
               <section
                 key={c}
@@ -119,6 +122,16 @@ export default function Dashboard() {
                 </div>
                 <div className="flex items-baseline gap-1.5 border-t border-line pt-4 text-sm text-muted">
                   오늘 투입 <b className="font-mono text-2xl tabular-nums text-ink">{count}</b>개
+                </div>
+                <div className="mt-2 flex items-center gap-2 text-[13px] text-muted">
+                  <span
+                    className={`size-2 rounded-full ${!sensor ? "bg-dim" : sensor.detected ? "bg-full" : "bg-ok"}`}
+                  />
+                  IR 센서{" "}
+                  <b className={!sensor ? "font-medium text-dim" : sensor.detected ? "text-full" : "text-ok"}>
+                    {!sensor ? "기록 없음" : sensor.detected ? "감지 중" : "비어있음"}
+                  </b>
+                  {sensor && <span className="text-dim">· {agoText(sensor.created_at, now)} 바뀜</span>}
                 </div>
                 {s.needsSensorCheck && (
                   <div className="mt-3 rounded-md border border-warn/50 bg-warn/10 px-3 py-2 text-[13px] text-warn">
