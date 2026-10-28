@@ -50,7 +50,7 @@ export default function LogPage() {
     <>
       <Header />
       <main className="mx-auto grid max-w-6xl gap-5 p-4 sm:p-7 lg:grid-cols-[1fr_360px]">
-        <section className="min-w-0 rounded-xl border-2 border-gray-300 bg-white p-5 sm:px-6">
+        <section className="min-w-0 rounded-xl border border-line bg-panel p-5 sm:px-6">
           <h2 className="mb-3.5 text-lg font-bold">투입 기록 · {periodLabel}</h2>
           <div className="mb-3.5 flex flex-wrap gap-2 text-sm">
             {(["all", ...COMPARTMENTS] as Filter[]).map((f) => (
@@ -58,7 +58,7 @@ export default function LogPage() {
                 key={f}
                 onClick={() => setFilter(f)}
                 className={`rounded-full border px-3 py-1 ${
-                  filter === f ? "border-gray-900 bg-gray-900 text-white" : "border-gray-300"
+                  filter === f ? "border-accent bg-accent/15 font-bold text-accent" : "border-line text-muted hover:text-ink"
                 }`}
               >
                 {f === "all" ? "전체" : LABEL[f]}
@@ -67,7 +67,7 @@ export default function LogPage() {
             <select
               value={period}
               onChange={(e) => setPeriod(e.target.value as Period)}
-              className="ml-auto rounded-full border border-gray-300 px-3 py-1"
+              className="ml-auto rounded-full border border-line bg-panel-2 px-3 py-1 text-ink"
             >
               {PERIODS.map((p) => (
                 <option key={p.value} value={p.value}>{p.label}</option>
@@ -78,7 +78,7 @@ export default function LogPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[560px] border-collapse text-[15px]">
               <thead>
-                <tr className="border-b border-gray-200 text-left text-[13px] text-gray-400">
+                <tr className="border-b border-line text-left text-[13px] text-dim">
                   <th className="py-1.5 font-normal">사진</th>
                   <th className="font-normal">시각</th>
                   <th className="font-normal">판정 품목</th>
@@ -89,25 +89,25 @@ export default function LogPage() {
               </thead>
               <tbody>
                 {shown.map((d) => (
-                  <tr key={d.id} className="border-b border-gray-100">
+                  <tr key={d.id} className="border-b border-line/60 hover:bg-panel-2/60">
                     <td className="py-2">
                       <Photo url={d.photo_path ? photos[d.photo_path] : undefined} className="h-12 w-[72px]" />
                     </td>
-                    <td>{period === "today" ? fmtTime(d.created_at) : fmtDateTime(d.created_at)}</td>
+                    <td className="font-mono tabular-nums text-muted">{period === "today" ? fmtTime(d.created_at) : fmtDateTime(d.created_at)}</td>
                     <td>
-                      <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-sm font-bold">{LABEL[d.predicted]}</span>
+                      <span className="rounded-full border border-line bg-panel-2 px-2.5 py-0.5 text-sm font-bold">{LABEL[d.predicted]}</span>
                     </td>
-                    <td>{Math.round(d.confidence * 100)}%</td>
+                    <td className={`font-mono tabular-nums ${d.confidence < MIN_CONF ? "text-warn" : ""}`}>{Math.round(d.confidence * 100)}%</td>
                     <td>
                       {LABEL[d.dropped_into]}
-                      {d.confidence < MIN_CONF && <span className="text-[13px] text-amber-700"> · 확신 부족</span>}
+                      {d.confidence < MIN_CONF && <span className="text-[13px] text-warn"> · 확신 부족</span>}
                     </td>
                     <td>
                       <select
                         value={d.corrected ?? ""}
                         onChange={(e) => correct(d, e.target.value)}
                         className={`rounded-md border px-2 py-1 text-[13px] ${
-                          d.corrected ? "border-amber-600 text-amber-700" : "border-blue-700 text-blue-700"
+                          d.corrected ? "border-warn/60 bg-warn/10 text-warn" : "border-accent/50 bg-panel-2 text-accent"
                         }`}
                       >
                         <option value="">{d.corrected ? "수정 취소" : "맞음 (수정 ▾)"}</option>
@@ -120,17 +120,17 @@ export default function LogPage() {
                 ))}
               </tbody>
             </table>
-            {loaded && shown.length === 0 && <p className="py-10 text-center text-gray-400">기록이 없습니다</p>}
+            {loaded && shown.length === 0 && <p className="py-10 text-center text-dim">기록이 없습니다</p>}
           </div>
         </section>
 
-        <section className="self-start rounded-xl border-2 border-gray-300 bg-white p-5 sm:px-6">
+        <section className="self-start rounded-xl border border-line bg-panel p-5 sm:px-6">
           <h2 className="mb-3.5 text-lg font-bold">{periodLabel} 품목별 투입량</h2>
-          <div className="flex h-[200px] items-end gap-6 border-b-2 border-gray-300 px-2">
+          <div className="flex h-[200px] items-end gap-6 border-b border-line px-2">
             {COMPARTMENTS.map((c) => (
-              <div key={c} className="flex flex-1 flex-col items-center justify-end gap-1.5 text-sm">
+              <div key={c} className="flex flex-1 flex-col items-center justify-end gap-1.5 font-mono text-sm tabular-nums text-muted">
                 {counts[c]}
-                <div className="w-full rounded-t bg-slate-400" style={{ height: `${(counts[c] / max) * 170}px` }} />
+                <div className="w-full rounded-t bg-gradient-to-t from-accent/30 to-accent" style={{ height: `${(counts[c] / max) * 170}px` }} />
               </div>
             ))}
           </div>
@@ -139,23 +139,23 @@ export default function LogPage() {
               <span key={c} className="flex-1 text-center">{LABEL[c]}</span>
             ))}
           </div>
-          <div className="mt-5 space-y-1 text-sm text-gray-700">
-            <p>총 투입 <b className="text-lg text-gray-900">{deposits.length}</b>개</p>
+          <div className="mt-5 space-y-2 text-sm text-muted">
+            <p>총 투입 <b className="font-mono text-lg tabular-nums text-ink">{deposits.length}</b>개</p>
             <p>
-              확신 부족으로 일반 처리 <b className="text-lg text-gray-900">{lowConf}</b>개
+              확신 부족으로 일반 처리 <b className="font-mono text-lg tabular-nums text-ink">{lowConf}</b>개
               {deposits.length > 0 && ` (${((lowConf / deposits.length) * 100).toFixed(1)}%)`}
             </p>
             <p>
-              가득참 발생 <b className="text-lg text-gray-900">{fullEvents}</b>회 · 수거 완료{" "}
-              <b className="text-lg text-gray-900">{collected}</b>회
+              가득참 발생 <b className="font-mono text-lg tabular-nums text-ink">{fullEvents}</b>회 · 수거 완료{" "}
+              <b className="font-mono text-lg tabular-nums text-ink">{collected}</b>회
             </p>
-            <p>관리자가 수정한 판정 <b className="text-lg text-gray-900">{corrected}</b>개 → 재학습 데이터</p>
+            <p>관리자가 수정한 판정 <b className="font-mono text-lg tabular-nums text-ink">{corrected}</b>개 → 재학습 데이터</p>
             <p>
               실제 정확도{" "}
-              <b className={`text-lg ${accuracy !== null && accuracy < 85 ? "text-red-600" : "text-gray-900"}`}>
+              <b className={`font-mono text-lg tabular-nums ${accuracy !== null && accuracy < 85 ? "text-full" : "text-ok"}`}>
                 {accuracy === null ? "-" : `${accuracy.toFixed(1)}%`}
               </b>{" "}
-              <span className="text-gray-400">(목표 85%)</span>
+              <span className="text-dim">(목표 85%)</span>
             </p>
           </div>
         </section>
