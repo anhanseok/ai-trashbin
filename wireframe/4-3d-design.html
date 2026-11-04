@@ -1,0 +1,562 @@
+<title>AI 분리수거함 3D 설계도</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* 레이아웃: 큰 3D 무대(조작 패널 위) → 치수·배선표·핀 지도·부품 목록·확인할 것. 단위는 전부 cm, 핀은 물리 번호 */
+:root{
+  --bg:#f3f5f7; --sheet:#ffffff; --ink:#15202b; --muted:#5a6876; --line:#d6dde4;
+  --accent:#0b6bcb; --accent-bg:#e4effa; --warn:#a85a00; --warn-bg:#fdf1e2; --stage:#e8edf2;
+  --f-body:"IBM Plex Sans KR","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c1218; --sheet:#121b24; --ink:#e3eaf1; --muted:#93a3b3; --line:#243241;
+  --accent:#5fb0ff; --accent-bg:#14304b; --warn:#f2b45a; --warn-bg:#3a2a12; --stage:#0a1016; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1218; --sheet:#121b24; --ink:#e3eaf1; --muted:#93a3b3; --line:#243241;
+  --accent:#5fb0ff; --accent-bg:#14304b; --warn:#f2b45a; --warn-bg:#3a2a12; --stage:#0a1016; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 72px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:36px}
+h1,h2,h3{margin:0;line-height:1.3;text-wrap:balance}
+h1{font-size:clamp(1.5rem,3.6vw,2.1rem)}
+h2{font-size:1.2rem;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+h2 small{font-family:var(--f-mono);font-size:.78rem;color:var(--muted);font-weight:500}
+p{margin:0;max-width:70ch}
+.lead{color:var(--muted);margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{font-family:var(--f-mono);font-size:.8rem;border:1px solid var(--line);background:var(--sheet);border-radius:999px;padding:3px 10px;color:var(--muted)}
+.chip b{color:var(--ink);font-weight:600}
+section{display:flex;flex-direction:column;gap:14px}
+
+.stage{position:relative;height:clamp(380px,64vh,660px);border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--stage)}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;transform:translate(-50%,-100%);white-space:nowrap;font-size:11.5px;line-height:1.25;padding:2px 6px;border-radius:5px;
+  background:color-mix(in srgb,var(--sheet) 88%,transparent);border:1px solid var(--line);color:var(--ink)}
+.lbl.dim{font-family:var(--f-mono);font-size:11px;color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+.lbl.wire{font-size:10.5px;color:var(--muted)}
+.hint{position:absolute;left:10px;bottom:8px;font-size:11.5px;color:var(--muted);pointer-events:none}
+.loadmsg{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:.95rem;text-align:center;padding:16px}
+
+.panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.box{background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.box h3{font-size:.82rem;color:var(--muted);font-weight:500;letter-spacing:.02em}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+button{font:inherit;font-size:.88rem;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:7px;padding:5px 11px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);font-weight:600}
+label.tg{display:flex;align-items:center;gap:7px;font-size:.88rem;cursor:pointer}
+label.tg input{width:16px;height:16px;accent-color:var(--accent)}
+#status{font-family:var(--f-mono);font-size:.82rem;color:var(--accent);min-height:1.3em}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.82rem;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:4px;border-radius:2px;vertical-align:middle;margin-right:5px}
+
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.76rem;color:var(--muted);font-weight:500;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.num,.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px;border:1px solid rgba(0,0,0,.25)}
+.warnrow td{background:var(--warn-bg)}
+.warnrow td:first-child{color:var(--warn);font-weight:600}
+
+.pins{display:grid;grid-template-columns:1fr 1fr;gap:4px;max-width:520px}
+.pin{display:flex;align-items:center;gap:8px;font-size:.8rem;border:1px solid var(--line);border-radius:6px;padding:3px 8px;background:var(--sheet);min-width:0}
+.pin:nth-child(even){flex-direction:row-reverse;text-align:right}
+.pin .n{font-family:var(--f-mono);font-weight:600;width:1.6em;text-align:center;flex:none}
+.pin .t{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pin.use{border-color:var(--accent);background:var(--accent-bg)}
+.pin.use .t{color:var(--ink);font-weight:500}
+.pin.busy{border-style:dashed}
+.pinwrap{display:grid;grid-template-columns:minmax(0,520px) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:760px){.pinwrap{grid-template-columns:1fr}}
+
+.checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.check{background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:.9rem}
+.check b{display:block;margin-bottom:4px}
+.check.w{border-color:color-mix(in srgb,var(--warn) 55%,var(--line));background:var(--warn-bg)}
+.check.w b{color:var(--warn)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>AI 분리수거함 3D 설계도</h1>
+    <p class="lead">우드락 외벽 안에 높이 60cm 막대를 세우고, 그 위 서보 2개가 받침판을 돌리고 기울여 바닥의 원형 통 3개에 나눠 담는 구조입니다. 지붕 아래에는 카메라와 LED가, 지붕 위에는 라즈베리파이·PCA9685·브레드보드가 있습니다. 끌어서 돌리고, 휠이나 두 손가락으로 확대하세요.</p>
+    <div class="chips">
+      <span class="chip">바닥 <b>60×60</b></span><span class="chip">벽 높이 <b>90</b></span><span class="chip">막대 <b>60</b></span>
+      <span class="chip">받침판 <b>≈72</b> · <b>20×20</b></span><span class="chip">통 <b>Ø18 × 20</b> ×3</span><span class="chip">단위 cm</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="stage" id="stage">
+      <canvas id="cv" aria-label="수거함 3D 모델"></canvas>
+      <div id="labels"></div>
+      <div class="loadmsg" id="loadmsg">3D 모델을 불러오는 중…</div>
+      <div class="hint">끌기: 회전 · 휠/핀치: 확대 · 오른쪽 끌기: 이동</div>
+    </div>
+
+    <div class="panel">
+      <div class="box">
+        <h3>보기</h3>
+        <div class="row" id="views">
+          <button type="button" data-view="iso" class="on" id="v-iso">비스듬히</button>
+          <button type="button" data-view="front" id="v-front">정면</button>
+          <button type="button" data-view="side" id="v-side">옆</button>
+          <button type="button" data-view="top" id="v-top">위</button>
+        </div>
+      </div>
+      <div class="box">
+        <h3>보이기</h3>
+        <div class="row">
+          <label class="tg"><input type="checkbox" id="t-wall" checked> 외벽·지붕</label>
+          <label class="tg"><input type="checkbox" id="t-wire" checked> 배선</label>
+          <label class="tg"><input type="checkbox" id="t-fov" checked> 카메라 시야</label>
+          <label class="tg"><input type="checkbox" id="t-lbl" checked> 이름표</label>
+          <label class="tg"><input type="checkbox" id="t-stand"> 통 받침대 25cm</label>
+        </div>
+      </div>
+      <div class="box">
+        <h3>투하 동작</h3>
+        <div class="row">
+          <button type="button" id="d-plastic">페트</button>
+          <button type="button" id="d-general">일반</button>
+          <button type="button" id="d-can">캔</button>
+          <button type="button" id="d-home">원위치</button>
+        </div>
+        <div id="status">대기 · 회전 90° · 기울임 90°</div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i style="background:#d33b2f"></i>3.3V / 5V (+)</span>
+      <span><i style="background:#1d1d1d"></i>GND (−, 파이 쪽)</span>
+      <span><i style="background:#7a4a24"></i>갈색: 서보·IR 연장선 GND / I2C SDA</span>
+      <span><i style="background:#f08a1c"></i>주황: 신호 (PWM·IR OUT)</span>
+      <span><i style="background:#e8e8e8;border:1px solid #999"></i>흰색: SCL · CSI 리본</span>
+      <span><i style="background:#2f7de1"></i>USB 전원</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>1. 치수 <small>cm · 바닥 위 높이 기준</small></h2>
+    <div class="tblwrap"><table>
+      <thead><tr><th>부분</th><th>크기</th><th>높이</th><th>메모</th></tr></thead>
+      <tbody>
+        <tr><td>바닥판 (우드락)</td><td class="num">60 × 60</td><td class="num">0</td><td>막대는 바닥 한가운데</td></tr>
+        <tr><td>외벽 3면 (우드락 60×90)</td><td class="num">60 × 90</td><td class="num">0 ~ 90</td><td>뒤·왼쪽·오른쪽. <b>앞면은 열어 둠</b> (통 꺼내기)</td></tr>
+        <tr><td>지붕 (우드락 60×90에서 60×60 잘라냄)</td><td class="num">60 × 60</td><td class="num">90</td><td>투입구 14×14 (받침판 바로 위), 아래에 카메라·LED</td></tr>
+        <tr><td>나무 막대</td><td class="num">3 × 3</td><td class="num">0 ~ 60</td><td>꼭대기에 합판 10×10, 브라켓 A 목재 나사</td></tr>
+        <tr><td>서보 장치 (S1 회전 + S2 기울임)</td><td class="num">약 6 × 6</td><td class="num">60 ~ 71</td><td>회전 15° / 90° / 165°, 기울임 160° (수평 90°)</td></tr>
+        <tr><td>받침판 (우드락 + 바닥재)</td><td class="num">20 × 20</td><td class="num">≈ 72</td><td>벽 3면 높이 4, 앞쪽(쏟는 쪽)만 열림</td></tr>
+        <tr><td>원형 통 ×3</td><td class="num">Ø18 × 20</td><td class="num">0 ~ 20</td><td>막대 중심에서 20 떨어진 반원 위 (왼 페트 · 앞 일반 · 오른 캔)</td></tr>
+        <tr><td>IR 센서 ×3</td><td class="num">3.1 × 1.4</td><td class="num">16</td><td>통 높이 80% 지점, 통 바깥 벽에서 안쪽을 봄</td></tr>
+        <tr><td>카메라 ↔ 받침판</td><td class="num">≈ 18</td><td class="num">90 → 72</td><td>이 거리에서 약 18 × 13.5 범위가 찍힘</td></tr>
+        <tr><td>받침판 → 통 입구 낙하</td><td class="num">≈ 52</td><td class="num">72 → 20</td><td>받침대 25를 쓰면 ≈ 27</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>2. 배선표 <small>파이 핀은 물리 번호 (1~40)</small></h2>
+    <div class="tblwrap"><table>
+      <thead><tr><th>부품 · 핀</th><th>연결</th><th>파이 핀</th><th>선</th><th>메모</th></tr></thead>
+      <tbody>
+        <tr><td>PCA9685 VCC</td><td>파이 3.3V</td><td class="num">1</td><td><span class="sw" style="background:#d33b2f"></span>빨강</td><td>보드 칩 전원</td></tr>
+        <tr><td>PCA9685 SDA</td><td>파이 SDA (GPIO2)</td><td class="num">3</td><td><span class="sw" style="background:#7a4a24"></span>갈색</td><td>I2C 데이터</td></tr>
+        <tr><td>PCA9685 SCL</td><td>파이 SCL (GPIO3)</td><td class="num">5</td><td><span class="sw" style="background:#eee"></span>흰색</td><td>I2C 클럭</td></tr>
+        <tr><td>PCA9685 GND</td><td>파이 GND</td><td class="num">6</td><td><span class="sw" style="background:#1d1d1d"></span>검정</td><td></td></tr>
+        <tr class="warnrow"><td>PCA9685 옆 6핀 V+</td><td>비워 둠</td><td class="num">—</td><td>—</td><td>파이에 연결하면 안 됨</td></tr>
+        <tr><td>PCA9685 초록 단자 + / −</td><td>5V 5A 어댑터 (DC 커넥터)</td><td class="num">—</td><td><span class="sw" style="background:#d33b2f"></span>빨강 / <span class="sw" style="background:#1d1d1d"></span>검정</td><td>서보 전원. 20AWG</td></tr>
+        <tr><td>PCA9685 CH0</td><td>S1 회전 서보 (연장선 100)</td><td class="num">—</td><td><span class="sw" style="background:#7a4a24"></span>갈색 바깥(검정 핀)</td><td>주황은 안쪽(노랑 핀)</td></tr>
+        <tr><td>PCA9685 CH1</td><td>S2 기울임 서보 (연장선 100)</td><td class="num">—</td><td><span class="sw" style="background:#7a4a24"></span>갈색 바깥(검정 핀)</td><td>회전할 때 꼬이지 않게 여유 남기기</td></tr>
+        <tr><td>브레드보드 + 줄</td><td>파이 3.3V</td><td class="num">17</td><td><span class="sw" style="background:#d33b2f"></span>빨강</td><td>IR 3개 VCC를 여기서 나눔</td></tr>
+        <tr><td>IR 일반 (가운데 통)</td><td>VCC→브레드보드 +, GND, OUT</td><td class="num">14 · 15</td><td><span class="sw" style="background:#f08a1c"></span>OUT</td><td>GND 14번, OUT 15번 (GPIO22)</td></tr>
+        <tr><td>IR 페트 (왼쪽 통)</td><td>VCC→브레드보드 +, GND, OUT</td><td class="num">20 · 11</td><td><span class="sw" style="background:#f08a1c"></span>OUT</td><td>GND 20번, OUT 11번 (GPIO17)</td></tr>
+        <tr><td>IR 캔 (오른쪽 통)</td><td>VCC→브레드보드 +, GND, OUT</td><td class="num">25 · 13</td><td><span class="sw" style="background:#f08a1c"></span>OUT</td><td>GND 25번, OUT 13번 (GPIO27)</td></tr>
+        <tr><td>카메라 OV5647</td><td>파이 CSI 포트</td><td class="num">—</td><td><span class="sw" style="background:#eee"></span>리본 50</td><td>파이 쪽 접점은 HDMI 방향. 끄고 꽂기</td></tr>
+        <tr><td>USB LED</td><td>파이 USB 또는 별도 충전기</td><td class="num">—</td><td><span class="sw" style="background:#2f7de1"></span>USB</td><td>2.5W 넘으면 별도 충전기</td></tr>
+        <tr><td>라즈베리파이 전원</td><td>USB-C 충전기</td><td class="num">—</td><td><span class="sw" style="background:#2f7de1"></span>USB-C</td><td>5V 3A 권장, <span class="mono">throttled=0x0</span> 확인</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>3. 파이 핀 지도 <small>파란 칸 = 사용 · 점선 = 이미 다른 선</small></h2>
+    <div class="pinwrap">
+      <div class="pins" id="pins" aria-label="라즈베리파이 40핀 지도"></div>
+      <div class="box">
+        <h3>핀 찾는 법</h3>
+        <p>파이를 USB 포트가 아래로 오게 놓으면 <b>왼쪽 위가 1번</b>입니다. 왼쪽 줄은 홀수(1, 3, 5…), 오른쪽 줄은 짝수입니다.</p>
+        <p>이미 꽂힌 PCA9685 선(1·3·5·6번, 빨강·갈색·흰색·검정)을 기준으로 세면 헷갈리지 않습니다.</p>
+        <p>9번에는 이미 다른 선(팬 케이스로 추정)이 있어 IR GND는 <b>14 · 20 · 25번</b>을 씁니다.</p>
+        <p>선을 꽂고 뺄 때는 <b>파이를 끈 상태</b>에서 합니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. 부품 목록</h2>
+    <div class="tblwrap"><table>
+      <thead><tr><th>부품</th><th>개수</th><th>쓰는 곳</th></tr></thead>
+      <tbody>
+        <tr><td>우드락 60×90</td><td class="num">5</td><td>벽 3, 지붕 1, 여분 1 (받침판·받침판 벽·통 받침대)</td></tr>
+        <tr><td>우드락 60×60</td><td class="num">1</td><td>바닥</td></tr>
+        <tr><td>나무 막대 3×3 × 60</td><td class="num">1</td><td>서보 장치 기둥</td></tr>
+        <tr><td>합판 10×10 / 5×5</td><td class="num">각 1</td><td>막대 윗판 / U 브라켓과 받침판 사이</td></tr>
+        <tr><td>원형 통 Ø18 × 20</td><td class="num">3</td><td>페트 · 일반 · 캔</td></tr>
+        <tr><td>MG996R 서보</td><td class="num">2 (+1)</td><td>S1 회전, S2 기울임</td></tr>
+        <tr><td>다기능 브라켓 A·B, U 브라켓, 베어링</td><td class="num">각 1~2</td><td>서보 2단 (조립 완료)</td></tr>
+        <tr><td>금속 디스크 혼 25T</td><td class="num">2</td><td>H1(S1), H2(S2)</td></tr>
+        <tr><td>Raspberry Pi 4 8GB (팬 케이스)</td><td class="num">1</td><td>지붕 위</td></tr>
+        <tr><td>PCA9685 서보 드라이버</td><td class="num">1 (+1)</td><td>지붕 위</td></tr>
+        <tr><td>400홀 브레드보드</td><td class="num">1</td><td>IR 3.3V 나누기</td></tr>
+        <tr><td>IR 장애물 센서 FC-51</td><td class="num">3 (+2)</td><td>통마다 1개, 높이 16</td></tr>
+        <tr><td>카메라 OV5647 + 리본 50cm</td><td class="num">1</td><td>지붕 아래</td></tr>
+        <tr><td>USB LED</td><td class="num">1</td><td>지붕 아래, 카메라 옆</td></tr>
+        <tr><td>5V 5A 어댑터 + DC 커넥터(암)</td><td class="num">1</td><td>서보 전원</td></tr>
+        <tr><td>서보 연장선 100cm</td><td class="num">5</td><td>서보 2, IR 3 (지붕에서 통까지 약 1.2m)</td></tr>
+        <tr><td>점퍼선, M3 볼트, 목재 나사, 양면 폼테이프, 저온 글루건</td><td class="num">—</td><td>고정·연결</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>5. 정해지지 않은 것 · 조립 때 확인</h2>
+    <div class="checks">
+      <div class="check w"><b>낙하 높이 약 52cm</b>통 입구가 18cm라 캔이 튕겨 나갈 수 있습니다. 50cm 높이에서 손으로 15번 떨어뜨려 보고, 2번 넘게 밖으로 나가면 <b>통 받침대 25cm</b>를 씁니다 (위 "보이기"에서 켜 볼 수 있음).</div>
+      <div class="check w"><b>카메라 시야</b>지붕과 받침판 사이가 약 18cm라 받침판 가운데 약 13.5cm만 분류에 쓰입니다. 카메라를 단 뒤 시험 사진으로 확인하고, 좁으면 받침판을 15×15로 줄입니다.</div>
+      <div class="check"><b>투입구 위치</b>그림은 지붕 가운데 앞쪽(받침판 바로 위)에 14×14 구멍, 카메라는 그 뒤쪽에서 받침판을 내려다보게 그렸습니다.</div>
+      <div class="check"><b>페트·캔 좌우</b>회전 15°가 실제로 왼쪽인지는 서보 방향에 따라 다릅니다. 첫 동작 시험에서 보고 통 위치를 맞춥니다.</div>
+      <div class="check"><b>IR 연장선 핀 순서</b>서보 연장선은 갈색·빨강·주황(GND·VCC·신호) 순서이고, FC-51 센서 핀은 보통 OUT·GND·VCC 순서입니다. 센서 쪽은 점퍼선으로 순서를 맞춰 잇습니다.</div>
+      <div class="check"><b>회전 케이블 여유</b>S2 서보 선은 회전(15°~165°)을 따라 움직입니다. 막대 위에서 한 바퀴 느슨하게 남겨 묶습니다.</div>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+  // ── 핀 지도 ──
+  const PIN = {1:"3.3V",2:"5V",3:"GPIO2 SDA",4:"5V",5:"GPIO3 SCL",6:"GND",7:"GPIO4",8:"GPIO14",9:"GND",10:"GPIO15",
+    11:"GPIO17",12:"GPIO18",13:"GPIO27",14:"GND",15:"GPIO22",16:"GPIO23",17:"3.3V",18:"GPIO24",19:"GPIO10",20:"GND",
+    21:"GPIO9",22:"GPIO25",23:"GPIO11",24:"GPIO8",25:"GND",26:"GPIO7",27:"ID_SD",28:"ID_SC",29:"GPIO5",30:"GND",
+    31:"GPIO6",32:"GPIO12",33:"GPIO13",34:"GND",35:"GPIO19",36:"GPIO16",37:"GPIO26",38:"GPIO20",39:"GND",40:"GPIO21"};
+  const USE = {1:"PCA9685 VCC",3:"PCA9685 SDA",5:"PCA9685 SCL",6:"PCA9685 GND",11:"IR 페트 OUT",13:"IR 캔 OUT",
+    14:"IR 일반 GND",15:"IR 일반 OUT",17:"브레드보드 +",20:"IR 페트 GND",25:"IR 캔 GND"};
+  const pinsEl = document.getElementById("pins");
+  for (let n = 1; n <= 40; n++) {
+    const d = document.createElement("div");
+    d.className = "pin" + (USE[n] ? " use" : "") + (n === 9 ? " busy" : "");
+    d.innerHTML = `<span class="n">${n}</span><span class="t">${USE[n] ? USE[n] + " · " : ""}${n === 9 ? "사용 중 · " : ""}${PIN[n]}</span>`;
+    pinsEl.appendChild(d);
+  }
+
+  if (!window.THREE || !THREE.OrbitControls) {
+    document.getElementById("loadmsg").textContent = "3D 라이브러리를 불러오지 못했습니다. 새로고침해 주세요. 아래 표는 그대로 볼 수 있습니다.";
+    return;
+  }
+  document.getElementById("loadmsg").hidden = true;
+
+  const stage = document.getElementById("stage"), cv = document.getElementById("cv"), labelsEl = document.getElementById("labels");
+  const renderer = new THREE.WebGLRenderer({canvas: cv, antialias: true});
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(40, 1, 0.5, 2000);
+  const controls = new THREE.OrbitControls(cam, cv);
+  controls.enableDamping = true; controls.target.set(0, 45, 0);
+
+  function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || "#e8edf2"; }
+  function applyTheme(){ scene.background = new THREE.Color(cssVar("--stage")); }
+  applyTheme();
+  try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme); } catch(e) {}
+  new MutationObserver(applyTheme).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 0.75));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.7); sun.position.set(60, 140, 90); scene.add(sun);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.25); fill.position.set(-80, 60, -40); scene.add(fill);
+
+  // ── 도우미 ──
+  const M = (color, o = {}) => new THREE.MeshStandardMaterial(Object.assign({color, roughness: 0.75, metalness: 0.05}, o));
+  function box(w, h, d, mat, x, y, z, parent = scene){
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); parent.add(m); return m;
+  }
+  function cyl(r, h, mat, x, y, z, parent = scene, axis = "y", open = false){
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 40, 1, open), mat);
+    if (axis === "x") m.rotation.z = Math.PI / 2;
+    if (axis === "z") m.rotation.x = Math.PI / 2;
+    m.position.set(x, y, z); parent.add(m); return m;
+  }
+  function edges(mesh, color, opacity = 0.6){
+    const l = new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), new THREE.LineBasicMaterial({color, transparent: true, opacity}));
+    l.position.copy(mesh.position); l.rotation.copy(mesh.rotation); mesh.parent.add(l); return l;
+  }
+  const labels = [];
+  function label(text, x, y, z, cls = "", obj = null, group = "base"){
+    const el = document.createElement("div"); el.className = "lbl " + cls; el.textContent = text; labelsEl.appendChild(el);
+    labels.push({el, p: new THREE.Vector3(x, y, z), obj, group}); return el;
+  }
+  const groups = {wall: new THREE.Group(), wire: new THREE.Group(), fov: new THREE.Group(), stand: new THREE.Group()};
+  Object.values(groups).forEach(g => scene.add(g));
+
+  // ── 바닥·외벽·지붕 (우드락) ──
+  const foam = M(0xf4f4ef, {roughness: 0.95});
+  const floor = box(60, 1, 60, foam, 0, -0.5, 0); edges(floor, 0x8c96a0);
+  const wallMat = M(0xf7f7f2, {transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide});
+  [[60, 90, 1, 0, 45, -30.5], [1, 90, 60, -30.5, 45, 0], [1, 90, 60, 30.5, 45, 0]].forEach(a => {
+    const w = box(a[0], a[1], a[2], wallMat, a[3], a[4], a[5], groups.wall); edges(w, 0x8c96a0, 0.55);
+  });
+  // 지붕: 투입구 14×14 (x -7~7, z -1~13) 를 비우고 4조각
+  [[60, 29, 0, -15.5], [60, 17, 0, 21.5], [23, 14, -18.5, 6], [23, 14, 18.5, 6]].forEach(a => {
+    const r = box(a[0], 1, a[1], wallMat, a[2], 90.5, a[3], groups.wall); edges(r, 0x8c96a0, 0.55);
+  });
+  label("지붕 · 투입구 14×14", 0, 92, 13, "", null, "wall");
+  label("앞면 열림", 0, 50, 31, "", null, "wall");
+
+  // ── 막대와 서보 장치 ──
+  const wood = M(0xc9a26b, {roughness: 0.9});
+  box(3, 60, 3, wood, 0, 30, 0);
+  box(10, 1, 10, M(0xb98e55), 0, 60.5, 0);
+  label("나무 막대 60", 2, 34, 2);
+  const steel = M(0x2a2f35, {metalness: 0.4, roughness: 0.5});
+  const servoMat = M(0x17191c, {roughness: 0.6});
+  const alu = M(0xc7ccd1, {metalness: 0.7, roughness: 0.35});
+  const brass = M(0xc9a23a, {metalness: 0.6, roughness: 0.4});
+  // 브라켓 A + S1 (세움, 축이 위)
+  box(5.6, 0.25, 2.6, steel, 0, 61.1, 0);
+  box(0.25, 3.6, 2.6, steel, -2.9, 62.9, 0); box(0.25, 3.6, 2.6, steel, 2.9, 62.9, 0);
+  box(4.1, 4.3, 2.0, servoMat, -1, 63.45, 0);
+  box(5.4, 0.25, 2.0, servoMat, -1, 64.5, 0);
+  cyl(0.35, 0.5, brass, 0, 65.85, 0);
+  label("S1 회전 서보 (CH0)", -4, 63, 2);
+
+  // 회전 부분 (S1 축 = y축)
+  const pan = new THREE.Group(); pan.position.set(0, 66.1, 0); scene.add(pan);
+  cyl(1.25, 0.3, alu, 0, 0.15, 0, pan);                       // H1
+  box(5.8, 0.25, 3.0, steel, 0, 0.45, 0, pan);                 // 브라켓 B 바닥
+  box(5.8, 2.6, 0.25, steel, 0, 1.7, -1.4, pan);               // 브라켓 B 옆판
+  box(4.3, 2.0, 4.1, servoMat, -0.3, 1.7, 0.4, pan);           // S2 (눕힘, 축이 +x)
+  cyl(0.35, 0.5, brass, 2.1, 1.7, 0, pan, "x");
+  label("S2 기울임 서보 (CH1)", -5, 3.2, 3, "", pan);
+
+  // 기울임 부분 (S2 축 = x축, 높이 67.8)
+  const tilt = new THREE.Group(); tilt.position.set(0, 1.7, 0); pan.add(tilt);
+  cyl(1.25, 0.3, alu, 2.6, 0, 0, tilt, "x");                  // H2
+  box(0.25, 4.6, 2.6, steel, 2.9, 1.5, 0, tilt);               // U 오른팔
+  box(0.25, 4.6, 2.6, steel, -2.9, 1.5, 0, tilt);              // U 왼팔
+  box(6.05, 0.25, 2.6, steel, 0, 3.7, 0, tilt);                // U 바닥(위)
+  cyl(0.55, 0.4, alu, -2.65, 0, 0, tilt, "x");                 // 베어링
+  box(5, 0.5, 5, M(0xb98e55), 0, 4.05, 0, tilt);               // 합판 5×5
+  const plate = box(20, 0.5, 20, M(0x9aa3ad, {roughness: 0.9}), 0, 4.55, 0, tilt);
+  edges(plate, 0x55606b);
+  const guard = M(0xf4f4ef, {roughness: 0.95});
+  box(20, 4, 0.5, guard, 0, 6.8, -9.75, tilt); box(0.5, 4, 20, guard, -9.75, 6.8, 0, tilt); box(0.5, 4, 20, guard, 9.75, 6.8, 0, tilt);
+  label("받침판 20×20 · 벽 3면", 0, 12, -10, "", tilt);
+  label("열린 면 (쏟는 쪽)", 0, 5, 11, "", tilt);
+
+  // 받침판 위 쓰레기 (투하 애니메이션용)
+  const itemMats = {plastic: M(0x9fd3f0, {transparent: true, opacity: 0.75, roughness: 0.2}), can: alu, general: M(0xd9c79a)};
+  let item = null;
+  function spawnItem(kind){
+    if (item) item.parent.remove(item);
+    if (kind === "general") item = new THREE.Mesh(new THREE.BoxGeometry(5, 2.5, 4), itemMats.general);
+    else if (kind === "can") item = new THREE.Mesh(new THREE.CylinderGeometry(3.3, 3.3, 6, 28), itemMats.can);
+    else { item = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 12, 28), itemMats.plastic); item.rotation.z = Math.PI / 2; }
+    item.position.set(0, kind === "plastic" ? 7.8 : kind === "can" ? 7.8 : 6.05, 0);
+    tilt.add(item);
+  }
+  spawnItem("can");
+
+  // ── 통 3개 + IR 센서 ──
+  const BIN_R = 20;
+  const BINS = {plastic: {deg: 15, name: "페트", color: 0x6fb6e8}, general: {deg: 90, name: "일반", color: 0x7c868f}, can: {deg: 165, name: "캔", color: 0xd9a441}};
+  const binPos = deg => { const t = deg * Math.PI / 180; return new THREE.Vector3(-Math.cos(t) * BIN_R, 0, Math.sin(t) * BIN_R); };
+  const binGroup = new THREE.Group(); scene.add(binGroup);
+  const sensorPos = {};
+  Object.entries(BINS).forEach(([k, b]) => {
+    const p = binPos(b.deg); b.pos = p;
+    const mat = M(b.color, {transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false});
+    const c = cyl(9, 20, mat, p.x, 10, p.z, binGroup, "y", true); edges(c, 0x44505c, 0.35);
+    cyl(9, 0.4, M(b.color), p.x, 0.2, p.z, binGroup);
+    const out = p.clone().setY(0).normalize();
+    const s = out.clone().multiplyScalar(BIN_R + 9.4); sensorPos[k] = new THREE.Vector3(s.x, 16, s.z);
+    const sensor = box(1.4, 3.1, 0.3, M(0x1d4fa3), s.x, 16, s.z, binGroup); sensor.lookAt(p.x, 16, p.z);
+    const eye = cyl(0.3, 0.6, M(0x222222), s.x - out.x * 0.4, 16.6, s.z - out.z * 0.4, binGroup); eye.lookAt(p.x, 16.6, p.z); eye.rotateX(Math.PI / 2);
+    label(`${b.name} 통 · 회전 ${b.deg}°`, p.x, 22, p.z);
+    label(`IR ${b.name} · 높이 16`, s.x, 18.6, s.z, "wire");
+  });
+  // 통 받침대 (선택)
+  Object.values(BINS).forEach(b => { const st = box(20, 25, 20, M(0xe9e4d6), b.pos.x, 12.5, b.pos.z, groups.stand); edges(st, 0x8c96a0); });
+  groups.stand.visible = false;
+
+  // ── 지붕 아래: 카메라·LED / 지붕 위: 파이·PCA9685·브레드보드·전원 단자 ──
+  const camBoard = box(2.5, 0.2, 2.4, M(0x2c8a3a), 0, 89.8, -8);
+  const lens = cyl(0.6, 0.8, M(0x111111), 0, 89.3, -8);
+  label("카메라 OV5647 (지붕 아래)", -4, 87, -8);
+  box(6, 0.6, 1.5, M(0xfff3b0, {emissive: 0xffe680, emissiveIntensity: 0.6}), 8, 89.7, -8);
+  label("USB LED", 9, 87.4, -8);
+  box(9.4, 3, 6.6, M(0x1b1e22), -16, 92.5, -18);
+  box(8.5, 0.2, 5.6, M(0x1f7a3a), -16, 94.1, -18);
+  label("라즈베리파이 4 (팬 케이스)", -16, 96.5, -18);
+  box(6.2, 0.4, 2.5, M(0x1c4fbf), 4, 91.2, -21);
+  box(1.5, 0.8, 1.6, M(0x2d9a4a), 9, 91.4, -21);
+  label("PCA9685", 4, 93.2, -21);
+  box(8.3, 1, 5.5, M(0xf2f2f2), 4, 91.5, -11);
+  box(8.3, 0.05, 0.4, M(0xd33b2f), 4, 92.03, -13.3);
+  label("브레드보드 (3.3V 나누기)", 4, 93.6, -11);
+
+  // 카메라 시야: 받침판 높이에서 약 18 × 13.5, 분류에 쓰는 가운데 정사각형 13.5
+  const fovMat = new THREE.LineBasicMaterial({color: 0x0b6bcb, transparent: true, opacity: 0.7});
+  const apex = new THREE.Vector3(0, 89, -8), yP = 72.6;
+  const corners = [[-9, -6.75], [9, -6.75], [9, 6.75], [-9, 6.75]].map(c => new THREE.Vector3(c[0], yP, c[1]));
+  const fovPts = []; corners.forEach(c => fovPts.push(apex, c)); for (let i = 0; i < 4; i++) fovPts.push(corners[i], corners[(i + 1) % 4]);
+  groups.fov.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(fovPts), fovMat));
+  const sq = [[-6.75, -6.75], [6.75, -6.75], [6.75, 6.75], [-6.75, 6.75]].map(c => new THREE.Vector3(c[0], yP + 0.05, c[1]));
+  groups.fov.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(sq), new THREE.LineBasicMaterial({color: 0xe0661c})));
+  label("찍히는 범위 ≈18×13.5", 9, 74, 7, "dim", null, "fov");
+
+  // ── 배선 ──
+  const WC = {red: 0xd33b2f, black: 0x1d1d1d, brown: 0x7a4a24, orange: 0xf08a1c, white: 0xe8e8e8, usb: 0x2f7de1};
+  function wire(points, color, r = 0.22, offset = [0, 0, 0]){
+    const pts = points.map(p => new THREE.Vector3(p[0] + offset[0], p[1] + offset[1], p[2] + offset[2]));
+    const curve = new THREE.CatmullRomCurve3(pts, false, "centripetal", 0.1);
+    const m = new THREE.Mesh(new THREE.TubeGeometry(curve, Math.max(24, pts.length * 14), r, 6, false), M(color, {roughness: 0.5}));
+    groups.wire.add(m); return m;
+  }
+  function bundle(points, colors, step){ colors.forEach((c, i) => wire(points, WC[c], 0.22, step.map(s => s * (i - (colors.length - 1) / 2)))); }
+  // I2C 4가닥: 파이 1·3·5·6번 → PCA9685
+  bundle([[-13, 94.3, -15.4], [-6, 93.6, -17], [0.6, 91.6, -20.5]], ["red", "brown", "white", "black"], [0, 0, 0.35]);
+  label("I2C 4가닥 (1·3·5·6번)", -5, 95, -16.5, "wire", null, "wire");
+  // 파이 17번 3.3V → 브레드보드 + 줄
+  wire([[-12.5, 94.3, -15.2], [-6, 93.2, -13.5], [0.3, 92.1, -13.3]], WC.red);
+  // 서보 2묶음: PCA9685 CH0·CH1 → 뒤 벽 → 막대 위
+  [[3.4, 63, "CH0 → S1"], [4.6, 67.8, "CH1 → S2"]].forEach(([x, yEnd, name], i) => {
+    bundle([[x, 91.6, -20], [x, 91.6, -27.5], [x, 90.6, -29.2], [x, 75, -29.2], [x - 1, 64 + i * 3, -16], [0.8, yEnd, -2.2]], ["brown", "red", "orange"], [0.32, 0, 0]);
+  });
+  label("서보 연장선 100 ×2 (여유 남기기)", 5, 74, -27, "wire", null, "wire");
+  // IR 3묶음: 브레드보드(+)·파이(GND·OUT) → 뒤 벽 → 바닥 → 각 통 센서
+  const irStart = {general: 6.2, plastic: 7.4, can: 8.6};
+  Object.keys(BINS).forEach(k => {
+    const x0 = irStart[k], s = sensorPos[k];
+    const pts = [[x0, 92, -11], [x0, 91.6, -27.5], [x0, 90.6, -29.2], [x0, 3, -29.2], [x0, 1.2, -26]];
+    const nx = s.x * 0.97, nz = s.z * 0.97;
+    pts.push([nx * 0.6 + x0 * 0.4, 1.2, (nz + -26) / 2], [nx, 1.2, nz], [nx, 14.5, nz], [s.x, 15.6, s.z]);
+    bundle(pts, ["red", "brown", "orange"], [0.3, 0, 0]);
+  });
+  label("IR 3묶음 (VCC 브레드보드 · GND/OUT 파이)", 8, 40, -28.5, "wire", null, "wire");
+  // 카메라 리본 50cm
+  wire([[-16, 94.2, -14.6], [-8, 92, -11], [0, 91.4, -8.6], [0, 90.2, -8.2]], WC.white, 0.35);
+  label("CSI 리본 50", -8, 93.5, -10.5, "wire", null, "wire");
+  // 5V 5A 어댑터 → PCA9685 초록 단자
+  wire([[9.6, 91.7, -21], [12, 91.6, -27], [12.5, 91.2, -31.6], [12.5, 2, -31.6], [12.5, 0.6, -40]], WC.red, 0.25, [0, 0, 0]);
+  wire([[9.6, 91.7, -21.6], [12.6, 91.6, -27], [13.2, 91.2, -31.6], [13.2, 2, -31.6], [13.2, 0.6, -40]], WC.black, 0.25);
+  label("5V 5A 어댑터 → 콘센트", 13, 10, -40, "wire", null, "wire");
+  // 파이 USB-C 전원, LED USB
+  wire([[-20.8, 92.3, -18], [-23, 91.6, -27], [-23.5, 91.2, -31.6], [-23.5, 2, -31.6], [-23.5, 0.6, -40]], WC.usb, 0.3);
+  label("파이 USB-C 전원 → 콘센트", -23.5, 10, -40, "wire", null, "wire");
+  wire([[8, 90, -8], [8, 91.4, -9.5], [-6, 92.4, -14], [-11.2, 92.6, -16]], WC.usb, 0.25);
+
+  // ── 치수선 (앞 오른쪽 모서리 밖) ──
+  const dimMat = new THREE.LineBasicMaterial({color: 0x0b6bcb});
+  const dx = 35, dz = 31;
+  const dpts = [new THREE.Vector3(dx, 0, dz), new THREE.Vector3(dx, 90, dz)];
+  [[0, "0"], [20, "통 20"], [60, "막대 60"], [72, "받침판 ≈72"], [90, "지붕 90"]].forEach(([y, t]) => {
+    dpts.push(new THREE.Vector3(dx - 1.5, y, dz), new THREE.Vector3(dx + 1.5, y, dz));
+    label(t, dx + 7, y + 1.5, dz, "dim", null, "dim");
+  });
+  scene.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(dpts), dimMat));
+
+  // ── 보기 · 토글 ──
+  const VIEWS = {iso: [[95, 105, 125], [0, 42, 0]], front: [[0, 50, 165], [0, 45, 0]], side: [[165, 55, 0], [0, 45, 0]], top: [[0.01, 215, 0.01], [0, 40, 0]]};
+  function setView(v){
+    cam.position.set(...VIEWS[v][0]); controls.target.set(...VIEWS[v][1]); controls.update();
+    document.querySelectorAll("#views button").forEach(b => b.classList.toggle("on", b.dataset.view === v));
+  }
+  document.querySelectorAll("#views button").forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
+  setView("iso");
+  const show = {base: true, wall: true, wire: true, fov: true, dim: true};
+  let showLabels = true;
+  const bind = (id, fn) => { const el = document.getElementById(id); el.addEventListener("change", () => fn(el.checked)); };
+  bind("t-wall", v => { groups.wall.visible = v; show.wall = v; });
+  bind("t-wire", v => { groups.wire.visible = v; show.wire = v; });
+  bind("t-fov", v => { groups.fov.visible = v; show.fov = v; });
+  bind("t-lbl", v => { showLabels = v; });
+  bind("t-stand", v => {
+    groups.stand.visible = v; binGroup.position.y = v ? 25 : 0;
+  });
+
+  // ── 투하 애니메이션 ──
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const statusEl = document.getElementById("status");
+  let queue = [], busy = false;
+  const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  const panTo = deg => (deg - 90) * Math.PI / 180;
+  const tiltTo = deg => (deg - 90) * Math.PI / 180;
+  function step(ms, fn, text){ queue.push({ms: reduce ? 1 : ms, fn, text}); }
+  function drop(kind){
+    if (busy) return;
+    busy = true; spawnItem(kind);
+    const b = BINS[kind]; const p0 = pan.rotation.y, p1 = panTo(b.deg), t1 = tiltTo(160);
+    let from, to;
+    step(900, t => pan.rotation.y = p0 + (p1 - p0) * ease(t), `회전 ${b.deg}° · ${b.name} 통 쪽으로`);
+    step(700, t => tilt.rotation.x = t1 * ease(t), "기울임 160° · 앞으로 쏟기");
+    step(700, (t, first) => {
+      if (first) {
+        from = new THREE.Vector3(); item.getWorldPosition(from); scene.attach(item);
+        to = b.pos.clone(); to.y = 3 + binGroup.position.y;
+      }
+      const e = t; item.position.lerpVectors(from, to, e); item.position.y = from.y + (to.y - from.y) * e * e + Math.sin(e * Math.PI) * 4;
+      item.rotation.x += 0.12;
+    }, `낙하 ≈${binGroup.position.y ? 27 : 52}cm → ${b.name} 통`);
+    step(600, t => tilt.rotation.x = t1 * (1 - ease(t)), "기울임 원위치 90°");
+    step(800, t => pan.rotation.y = p1 * (1 - ease(t)), "회전 원위치 90°");
+    step(1, () => { busy = false; statusEl.textContent = `${b.name} 투하 끝 · 대기`; });
+  }
+  function home(){ if (busy) return; queue = []; pan.rotation.y = 0; tilt.rotation.x = 0; spawnItem("can"); statusEl.textContent = "대기 · 회전 90° · 기울임 90°"; }
+  document.getElementById("d-plastic").onclick = () => drop("plastic");
+  document.getElementById("d-general").onclick = () => drop("general");
+  document.getElementById("d-can").onclick = () => drop("can");
+  document.getElementById("d-home").onclick = home;
+
+  let cur = null, curStart = 0;
+  function runQueue(now){
+    if (!cur && queue.length) { cur = queue.shift(); curStart = now; cur.first = true; if (cur.text) statusEl.textContent = cur.text; }
+    if (!cur) return;
+    const t = Math.min(1, (now - curStart) / cur.ms);
+    cur.fn(t, cur.first); cur.first = false;
+    if (t >= 1) cur = null;
+  }
+
+  // ── 렌더 · 이름표 ──
+  function resize(){
+    const w = stage.clientWidth, h = stage.clientHeight;
+    renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix();
+  }
+  new ResizeObserver(resize).observe(stage); resize();
+  const v = new THREE.Vector3();
+  function placeLabels(){
+    const w = stage.clientWidth, h = stage.clientHeight;
+    labels.forEach(l => {
+      const on = showLabels && show[l.group] !== false;
+      if (!on) { l.el.hidden = true; return; }
+      v.copy(l.p); if (l.obj) l.obj.localToWorld(v);
+      v.project(cam);
+      if (v.z > 1 || v.x < -1.1 || v.x > 1.1 || v.y < -1.1 || v.y > 1.1) { l.el.hidden = true; return; }
+      l.el.hidden = false;
+      l.el.style.left = ((v.x + 1) / 2 * w) + "px"; l.el.style.top = ((1 - v.y) / 2 * h) + "px";
+    });
+  }
+  function loop(now){
+    runQueue(now); controls.update(); renderer.render(scene, cam); placeLabels();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
