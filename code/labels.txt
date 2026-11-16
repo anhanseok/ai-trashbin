@@ -1,0 +1,4 @@
+0 can
+1 empty
+2 general
+3 plastic

@@ -15,3 +15,6 @@ code/*.tflite
 .admin-login
 # 수거함이 못 보낸 기록 보관함
 code/outbox/
+
+# 파이에서 찍은 실험 사진 (기록 jsonl·그래프는 experiments/ 에 정리)
+code/exp/

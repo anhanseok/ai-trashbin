@@ -2,6 +2,7 @@
 
 - 용어는 [CONTEXT.md](CONTEXT.md)를 따른다.
 - 사용자가 "기획서 작성 다시할게"라고 하면 [스펙.md](스펙.md) 맨 아래 "이어서 할 일"의 남은 일을 grilling 형식(번호 + 추천 답)으로 묻고, 답을 받으면 스펙.md에 반영한다. (1~11번 초안은 완료)
+- 진행 상황 (2026-11-16): 수거함 조립·IR 센서 3개 배선(페트 11·캔 13·일반 15번) 완료. 서보는 PCA9685 **회전 1번·기울임 2번**(0번 자리 고장). 사진 95장으로 첫 모델(`code/train_quick.py`, 모델·사진은 Git 제외 로컬 보관) → `main.py` 자동 분류·투하 동작 확인. 판단 시간 실험 결과는 [experiments/2026-11-16](experiments/2026-11-16/README.md). 파이는 아이폰 핫스팟에서 172.20.10.5.
 - 코드 작업 순서 (2026-10-19 기준, ①~⑤ 완료, ⑥ 부품 시험 완료·조립 재료 대기): ① Supabase 프로젝트 생성·[supabase/schema.sql](supabase/schema.sql) 실행·관리자 계정·`code/.env` 작성(사용자) → ② 파이에 .env 복사·DB 연결 시험 → ③ `main.py`를 새 테이블에 맞게 수정(사진 업로드, 센서 변경 기록, 30초 신호) → ④ 관리자 웹(Next.js) → ⑤ Vercel 배포 → ⑥ 부품 도착 후 카메라·서보 시험, 조립, 촬영, 학습 → ⑦ 전체 연결 시험. 사용자가 "코드 이어서 할게"라고 하면 남은 첫 단계부터 안내한다.
 - 라즈베리파이: 사용자 `pi`, 호스트 `raspberrypi`, SSH 키로 접속. 와이파이는 집 iptime5G(192.168.0.4, 우선)와 아이폰 핫스팟(172.20.10.x) 두 곳이 등록되어 있음. 주소가 바뀌면 MAC 2c-cf-67-09-09-bd 로 찾는다. 실제 보드는 **Raspberry Pi 4 Model B 8GB**(파이 5 아님, ElectroCookie 팬 케이스). 저장소는 `~/ai-trashbin`, venv는 `code/env`, sudo는 비밀번호 없이 가능.
 - Supabase 프로젝트 ref `ojxtixdmnedotimnsfcr`(서울). 관리 API 토큰은 `.supabase-token`, 웹 키는 `web/.env.local`, 수거함 키는 `code/.env` (모두 Git 제외). 웹은 `web/`(Next.js 15, `npm run dev`).

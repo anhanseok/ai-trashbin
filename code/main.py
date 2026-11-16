@@ -37,6 +37,12 @@ def drop(label):
     time.sleep(0.8)
     kit.servo[C.CH_TILT].angle = tilt         # 앞으로 기울여 투하
     time.sleep(1.0)
+    if label in C.SHAKE_BINS:                 # 가벼운 일반쓰레기(봉지 등)가 붙어 안 떨어지는 것 방지
+        for _ in range(C.SHAKE_TIMES):
+            kit.servo[C.CH_TILT].angle = tilt - C.SHAKE_BACK
+            time.sleep(0.15)
+            kit.servo[C.CH_TILT].angle = tilt + C.SHAKE_MORE
+            time.sleep(0.2)
     home()                                    # 원위치
 
 # ── 센서 ──
@@ -83,7 +89,8 @@ def classify():
     img = photo
     w, h = img.size
     s = min(w, h)
-    img = img.crop(((w-s)//2, (h-s)//2, (w+s)//2, (h+s)//2)).resize((224, 224))
+    left = min(C.CROP_LEFT, w - s)            # 쓰레기가 멈추는 오른쪽 벽 쪽 정사각형 (학습 사진도 같은 범위)
+    img = img.crop((left, (h-s)//2, left + s, (h+s)//2)).resize((224, 224))
     x = np.asarray(img, dtype=np.float32)[None] / 127.5 - 1
     model.set_tensor(inp["index"], x)
     model.invoke()
