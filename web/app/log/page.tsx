@@ -10,13 +10,13 @@ import { periodStart, useBinData, usePhotoUrls, type Period } from "@/lib/useBin
 
 type Filter = "all" | Compartment;
 const PERIODS: { value: Period; label: string }[] = [
-  { value: "today", label: "오늘" },
   { value: "7d", label: "최근 7일" },
+  { value: "today", label: "오늘" },
   { value: "all", label: "전체" },
 ];
 
 export default function LogPage() {
-  const [period, setPeriod] = useState<Period>("today");
+  const [period, setPeriod] = useState<Period>("7d");
   const { supabase, readings, collections, deposits, loaded } = useBinData(period);
   const [filter, setFilter] = useState<Filter>("all");
   const periodLabel = PERIODS.find((p) => p.value === period)!.label;
