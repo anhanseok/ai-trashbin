@@ -58,6 +58,9 @@ export default function LoginPage() {
         >
           {busy ? "로그인 중…" : "로그인"}
         </button>
+        <a href="/live" className="mt-4 block text-center text-sm text-muted hover:text-accent">
+          로그인 없이 수거함 상태 보기 →
+        </a>
       </form>
     </main>
   );

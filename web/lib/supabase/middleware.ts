@@ -22,8 +22,9 @@ export async function updateSession(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
   const onLogin = request.nextUrl.pathname.startsWith("/login");
+  const onPublic = request.nextUrl.pathname.startsWith("/live"); // 공개 화면: 로그인 없이
 
-  if (!user && !onLogin) {
+  if (!user && !onLogin && !onPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
