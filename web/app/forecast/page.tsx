@@ -147,10 +147,7 @@ export default function ForecastPage() {
           <h1 className="text-2xl font-bold">쓰레기 수요 예측</h1>
           <span className="text-sm text-muted">11월 하루 투입 수와 칸별 가득참 예상일</span>
         </div>
-        <div className="mb-5 rounded-lg border border-warn/50 bg-warn/10 px-4 py-3 text-sm text-warn">
-          ⚠ <b>임시 데이터(시뮬레이션)</b> {data.records}건으로 만든 예측입니다. 캠퍼스 수거함 1대를 가정한 기록이며 실제 운영
-          기록이 아닙니다. 운영 데이터가 쌓이면 같은 방법으로 다시 학습합니다.
-        </div>
+        <div className="mb-3" />
 
         <div className="mb-5 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
           <Stat label="11/20~30 예상 투입" value={<>{Math.round(total)}<span className="ml-1 text-base text-muted">개</span></>}
