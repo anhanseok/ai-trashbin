@@ -83,6 +83,20 @@ cam.configure(cam.create_preview_configuration(main={"size": (640, 480), "format
 cam.start()
 time.sleep(2)
 
+def probs():
+    """(품목별 확률 배열, 원본 사진)."""
+    photo = cam.capture_image("main").convert("RGB")
+    img = photo
+    w, h = img.size
+    s = min(w, h)
+    left = min(C.CROP_LEFT, w - s)
+    img = img.crop((left, (h-s)//2, left + s, (h+s)//2)).resize((224, 224))
+    x = np.asarray(img, dtype=np.float32)[None] / 127.5 - 1
+    model.set_tensor(inp["index"], x)
+    model.invoke()
+    return model.get_tensor(out["index"])[0].astype(float), photo
+
+
 def classify():
     """(라벨, 확신도, 원본 사진) 반환."""
     photo = cam.capture_image("main").convert("RGB")
@@ -106,12 +120,40 @@ def wait_for_item():
             time.sleep(0.1)
         time.sleep(1)                          # 흔들림이 멈출 때까지
         return classify()
-    detector = ArrivalDetector()               # 카메라 모드: 2번 연속 같은 결과일 때만
-    while True:
-        label, conf, photo = classify()
-        if detector.update(label, conf):
-            return label, conf, photo
-        time.sleep(0.4)
+    # 카메라 모드 (11-18 판단 시간 실험): 빈 받침판 확률이 떨어지면 도착으로 보고,
+    # 그때부터 DECIDE_SEC 초 동안 DECIDE_INTERVAL 초마다 찍은 확률의 평균으로 판정.
+    # 실험 28회: 2초 평균 89.3%, 예전 규칙(같은 판정 2번 연속) 75.0%
+    EMPTY = labels.index("empty")
+    while True:                                # 1) 물건이 올라올 때까지
+        p, photo = probs()
+        if p[EMPTY] < C.ARRIVE_EMPTY_BELOW:
+            break
+        time.sleep(0.2)
+    seen = [p]
+    # 웹에 올릴 사진: 첫 장은 떨어지는 중이라 흐리거나 물건이 반쯤만 보임 (11-19 확인).
+    # 2초 동안 찍은 것 중 물건이 가장 잘 보이는 장(빈 받침판 확률이 가장 낮은 장)을 고른다.
+    best, best_empty = photo, p[EMPTY]
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < C.DECIDE_SEC:  # 2) 정해진 시간 동안 더 보기
+        time.sleep(C.DECIDE_INTERVAL)
+        p, photo = probs()
+        seen.append(p)
+        if p[EMPTY] <= best_empty:
+            best, best_empty = photo, p[EMPTY]
+    m = np.mean(seen, axis=0)
+    m[EMPTY] = 0                               # 빈 받침판은 빼고 품목끼리 비교
+    i = int(np.argmax(m))
+    return labels[i], float(m[i] / max(1e-9, m.sum())), best
+
+
+def wait_until_empty():
+    """쏟은 뒤 받침판이 빌 때까지 (같은 물건을 두 번 세지 않게)."""
+    EMPTY = labels.index("empty")
+    run, t0 = 0, time.monotonic()
+    while run < 2 and time.monotonic() - t0 < 8:
+        p, _ = probs()
+        run = run + 1 if p[EMPTY] > C.LEAVE_EMPTY_ABOVE else 0
+        time.sleep(0.3)
 
 home()
 print("준비 완료. 쓰레기를 넣어 주세요. (Ctrl+C 종료)")
@@ -126,6 +168,8 @@ try:
             print("  → 확신 부족, 일반으로")      # 안전 로직
         drop(into)
         cloud.deposit(photo, label, conf, into)  # 판정 품목과 실제로 들어간 칸을 따로 기록
+        if not ultrasonic:
+            wait_until_empty()
 except KeyboardInterrupt:
     print("\n종료")
     cloud.flush()

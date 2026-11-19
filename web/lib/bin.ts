@@ -10,10 +10,10 @@ export const LABEL: Record<Compartment, string> = { plastic: "페트", can: "캔
 export const KIND: Record<Compartment, string> = {
   plastic: "재활용품",
   can: "재활용품",
-  general: "일반쓰레기 · 확신 70% 미만 포함",
+  general: "일반쓰레기 · 확신 65% 미만 포함",
 };
 
-export const MIN_CONF = 0.7; // 확신도가 이보다 낮으면 일반 칸으로 (안전 로직)
+export const MIN_CONF = 0.65; // 확신도가 이보다 낮으면 일반 칸으로 (안전 로직, 11-18 실험으로 70→65%)
 export const OFFLINE_MS = 2 * 60 * 1000; // 신호가 2분 넘게 없으면 연결 끊김
 
 export type Bin = { id: string; name: string; location: string; last_seen_at: string | null };

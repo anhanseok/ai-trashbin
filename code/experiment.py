@@ -81,6 +81,13 @@ print(f"실험 시작: 물건 {N_ITEMS}개, 물건당 {RECORD_SEC:g}초 기록 �
 home()
 try:
     for n in range(1, N_ITEMS + 1):
+        run, warned = 0, False                        # 받침판이 빈 것을 2번 연속 확인한 뒤에만 신호
+        while run < 2:
+            p, _ = shot()
+            run = run + 1 if p[EMPTY] > LEAVE_EMPTY_ABOVE else 0
+            if run == 0 and not warned:
+                print(f"  받침판이 비어 있지 않음 (빈 확률 {p[EMPTY]:.0%}). 치워 주세요", flush=True); warned = True
+            time.sleep(0.3)
         ready_signal()
         print(f"[{n}/{N_ITEMS}] 물건을 넣어 주세요", flush=True)
         while True:                                   # 물건이 올라올 때까지

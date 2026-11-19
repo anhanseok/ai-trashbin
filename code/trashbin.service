@@ -14,7 +14,7 @@ Conflicts=heartbeat.service
 User=pi
 WorkingDirectory=/home/pi/ai-trashbin/code
 ExecStart=/home/pi/ai-trashbin/code/env/bin/python -u main.py
-Restart=on-failure
+Restart=always
 RestartSec=5
 
 [Install]
