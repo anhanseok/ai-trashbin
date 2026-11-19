@@ -10,3 +10,4 @@
 - `trashbin.service`(main.py 자동 실행, Restart=always)가 파이 부팅 시 켜진다 (11-19 다시 enable, 모델 250장). IR은 캔 칸 1개만(GPIO17). heartbeat.service도 꺼 둠. 실험·촬영 스크립트를 돌릴 땐 카메라가 겹치므로 먼저 `sudo systemctl stop trashbin.service`, 끝나면 `start`.
 - 부품 시험(2026-10-19): 카메라 ov5647, PCA9685(0x40, I2C 켬), 서보 CH0·CH1 `test_servo.py` 모두 정상. 지금 연결된 PCA9685는 여분 보드. 파이 전원은 일반 USB 충전기라 통합 시험 때 `vcgencmd get_throttled`가 0x0인지 확인. 추가 주문 10/25 모두 도착: IR 센서 5개, 카메라 케이블 15→15핀 50cm(교체 후 정상 촬영 확인), 400홀 브레드보드(IR 센서 3.3V 분배용). 나무 재료는 아직 미구매.
 - 카메라·서보 없이 웹 연동 시험: 파이에서 `cd ~/ai-trashbin/code && env/bin/python fake_bin.py 5 5` (가짜 투입 + 페트 칸 가득참). 2026-10-15 시험 데이터(투입 3건, 페트 가득참)가 DB에 남아 있음 — 사용자가 화면을 본 뒤 지울 것.
+- 재학습: PC `code/`에서 `python retrain.py` 한 번이면 웹에서 관리자가 확인한 사진 받기 → 학습 → `data_test`(품목별 5장, 학습 제외) 채점 → 이전 이상이면 파이에 올리고 재시작. 2026-11-19 기준 파이 모델(286장)은 시험 사진을 학습한 모델이라 점수가 100%로 부풀어 있음 → 발표 후 첫 재학습은 `--force`. 학습에서 뺄 사진은 `code/data_hold/`.

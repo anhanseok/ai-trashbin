@@ -5,7 +5,7 @@ data/<정답>/db_<id>.jpg 로 저장하고, 이미 있는 파일은 건너뛴다
 사용법 (PC, code 폴더에서):
   python export_corrections.py [시작 날짜=2026-11-16] [--only-corrected]
 그다음: python train_quick.py data .  → 새 model_unquant.tflite 를 파이로 복사"""
-import json, os, sys, urllib.request
+import glob, json, os, sys, urllib.request
 from collections import Counter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -31,6 +31,9 @@ for r in rows:
         continue
     label = r["corrected"] or r["predicted"]
     out = os.path.join(HERE, "data", label, f"db_{r['id']}.jpg")
+    # 학습에서 일부러 뺀 사진(data_hold: 손이 찍힘 등)과 시험 사진(data_test)은 다시 받지 않는다
+    if any(glob.glob(os.path.join(HERE, d, "**", f"db_{r['id']}.jpg"), recursive=True) for d in ("data_hold", "data_test")):
+        continue
     # 예전에 판정 품목으로 내려받은 뒤 관리자가 고쳤으면, 틀린 폴더의 같은 사진을 지운다
     for other in os.listdir(os.path.join(HERE, "data")):
         old = os.path.join(HERE, "data", other, f"db_{r['id']}.jpg")

@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 const TABS = [
   { href: "/", label: "대시보드" },
   { href: "/log", label: "투입 기록" },
+  { href: "/forecast", label: "수요 예측" },
 ];
 
 function Clock() {
